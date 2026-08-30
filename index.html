@@ -21,7 +21,6 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- MÀN HÌNH ĐĂNG NHẬP -->
     <div id="login-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border border-slate-100">
             <div class="flex items-center gap-3 mb-6">
@@ -49,7 +48,6 @@
         </div>
     </div>
 
-    <!-- GIAO DIỆN CHÍNH -->
     <div id="app-screen" class="hidden flex-1 flex flex-col">
         <header class="bg-[#192038] text-white px-6 py-3.5 flex justify-between items-center shadow-md">
             <div class="flex items-center gap-3">
@@ -60,7 +58,6 @@
             <button onclick="doLogout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded transition-colors font-medium">Đăng xuất</button>
         </header>
 
-        <!-- NAVIGATION TABS -->
         <div class="bg-white border-b border-slate-200 px-6 flex gap-8 text-sm overflow-x-auto shadow-sm">
             <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn active py-3.5 font-medium transition-colors whitespace-nowrap">📦 Tồn kho tổng</button>
             <button onclick="switchTab('orders')" id="tab-orders" class="tab-btn py-3.5 font-medium text-slate-500 transition-colors whitespace-nowrap admin-only">📋 Đặt hàng tháng</button>
@@ -71,7 +68,6 @@
 
         <main class="flex-1 max-w-full w-full mx-auto p-4 md:p-6 space-y-5">
             
-            <!-- TAB 1: TỒN KHO TỔNG -->
             <div id="section-inventory" class="space-y-4">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 justify-between items-center">
                     <div class="flex gap-2 items-center w-full md:w-auto">
@@ -92,8 +88,7 @@
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
                                 <tr id="inv-thead-tr" class="bg-slate-50 text-slate-700 uppercase text-[10px] md:text-xs border-b border-slate-200">
-                                    <!-- Render Header Động bằng JS -->
-                                </tr>
+                                    </tr>
                             </thead>
                             <tbody id="inventory-tbody" class="divide-y divide-slate-100">
                                 <tr><td class="p-6 text-center text-slate-400">Đang tải...</td></tr>
@@ -103,7 +98,6 @@
                 </div>
             </div>
 
-            <!-- TAB 2: ĐẶT HÀNG THÁNG -->
             <div id="section-orders" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center">
                     <button onclick="openOrderModal()" class="bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold px-4 py-2 rounded-lg transition-colors shadow-sm">+ Tạo đơn đặt hàng</button>
@@ -127,14 +121,12 @@
                 </div>
             </div>
 
-            <!-- TAB 3: PHÁT CHO MODEL (ADMIN) - DẠNG LIST CẢI TIẾN -->
             <div id="section-distribution" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 justify-between items-center">
                     <div class="flex items-center gap-3 w-full md:w-auto">
                         <label class="text-sm font-bold text-slate-800 whitespace-nowrap">Chọn Kho đích để phát đến:</label>
                         <select id="dist-target-model" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-500 font-bold text-amber-600 bg-amber-50 w-full md:w-64">
-                            <!-- JS Render Options -->
-                        </select>
+                            </select>
                     </div>
                     <div class="text-xs text-slate-500 italic">Nhập số lượng trực tiếp vào danh sách bên dưới để chuyển kho nhanh.</div>
                 </div>
@@ -152,14 +144,12 @@
                                 </tr>
                             </thead>
                             <tbody id="distribution-tbody" class="divide-y divide-slate-100">
-                                <!-- JS Render List -->
-                            </tbody>
+                                </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 4: TIÊU HAO HẰNG NGÀY -->
             <div id="section-consumption" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 justify-between items-center border-l-4 border-l-amber-500">
                     <div>
@@ -176,8 +166,25 @@
                     </div>
                 </div>
 
-                <div id="consumption-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
-                    <!-- JS sẽ render thẻ vật tư vào đây -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                    <div class="p-3 bg-slate-50 border-b border-slate-200 font-bold text-slate-800 text-sm">
+                        Danh sách vật tư khả dụng tại kho
+                    </div>
+                    <div class="overflow-x-auto table-container">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 uppercase text-xs border-b border-slate-200">
+                                    <th class="p-3 w-16 text-center">Ảnh</th>
+                                    <th class="p-3">Mã & Tên vật tư</th>
+                                    <th class="p-3 text-center w-32 bg-amber-50/80 text-amber-900">Tồn kho hiện tại</th>
+                                    <th class="p-3 text-center w-36">SL trừ tiêu hao</th>
+                                    <th class="p-3 text-center w-32">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="consumption-list-tbody" class="divide-y divide-slate-100">
+                                </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -201,11 +208,9 @@
                 </div>
             </div>
 
-            <!-- TAB 5: KHAI BÁO & CÀI ĐẶT -->
             <div id="section-setup" class="space-y-6 hidden">
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     
-                    <!-- Bảng User -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
                         <div class="flex justify-between items-center border-b pb-3">
                             <h3 class="font-bold text-base text-slate-900">1. Tài khoản & Khởi tạo Model/Kho</h3>
@@ -227,7 +232,6 @@
                         </div>
                     </div>
 
-                    <!-- Bảng Danh mục Vật tư -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4 overflow-hidden">
                         <div class="flex justify-between items-center border-b pb-3">
                             <h3 class="font-bold text-base text-slate-900">2. Danh mục Vật tư</h3>
@@ -254,7 +258,6 @@
         </main>
     </div>
 
-    <!-- MODAL KHAI BÁO VẬT TƯ -->
     <div id="catalog-modal" class="modal-bg">
         <div class="modal">
             <h3 class="mb-4 text-slate-900 font-bold border-b pb-2 text-base">Khai báo Vật tư & Cấp quyền Model</h3>
@@ -293,7 +296,7 @@
 
                 <div class="grid grid-cols-3 gap-3 pt-2 border-t">
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tồn TT</label>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tồn tháng trước</label>
                         <input id="c-last-month" type="number" value="0" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50">
                     </div>
                     <div>
@@ -306,13 +309,11 @@
                     </div>
                 </div>
 
-                <!-- PHÂN BỔ MODEL -->
                 <div class="pt-3 border-t mt-2">
                     <label class="block text-xs font-bold uppercase text-slate-800 mb-1">Chỉ định Model sử dụng</label>
                     <p class="text-[11px] text-slate-500 mb-3 italic">Nếu không tick chọn bất kỳ ô nào, vật tư sẽ mặc định là <strong>Dùng chung</strong> (tất cả các model đều thấy).</p>
                     <div id="c-model-checkboxes" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        <!-- JS Render Checkbox -->
-                    </div>
+                        </div>
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-6 pt-3 border-t">
@@ -322,12 +323,10 @@
         </div>
     </div>
     
-    <!-- MODAL ĐẶT HÀNG -->
     <div id="order-modal" class="modal-bg"><div class="modal"><h3 class="mb-4 text-slate-900 font-bold border-b pb-2 text-base">Tạo đơn đặt hàng</h3><div class="space-y-3.5"><div><label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tháng</label><input id="o-month" type="text" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm"></div><div><label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tên VT</label><input id="o-name" type="text" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm"></div><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-bold uppercase text-slate-600 mb-1">SL Đặt</label><input id="o-qty" type="number" min="1" value="1" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm"></div><div><label class="block text-xs font-bold uppercase text-slate-600 mb-1">Ngày về (DK)</label><input id="o-expect-date" type="date" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm"></div></div></div><div class="flex justify-end gap-2 mt-6 pt-3 border-t"><button onclick="closeOrderModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-200">Hủy</button><button onclick="saveOrder()" class="px-4 py-2 rounded-lg text-sm bg-amber-500 text-white font-bold">Lưu đơn</button></div></div></div>
     
     <div id="receive-modal" class="modal-bg"><div class="modal"><h3 class="mb-4 text-slate-900 font-bold border-b pb-2 text-base">Xác nhận nhận hàng (Cộng vào Kho Tổng)</h3><input type="hidden" id="rec-order-id"><div class="space-y-3.5"><div><label class="block text-xs font-bold uppercase text-slate-600 mb-1">Chọn loại VT</label><select id="rec-catalog-id" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm"></select></div><div><label class="block text-xs font-bold uppercase text-slate-600 mb-1">SL Thực nhận</label><input id="rec-qty" type="number" min="1" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm"></div></div><div class="flex justify-end gap-2 mt-6 pt-3 border-t"><button onclick="closeReceiveModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-200">Hủy</button><button onclick="confirmReceiveOrder()" class="px-4 py-2 rounded-lg text-sm bg-emerald-600 text-white font-bold">Nhận hàng</button></div></div></div>
 
-    <!-- MODAL USER -->
     <div id="user-modal" class="modal-bg">
         <div class="modal">
             <h3 class="mb-4 text-slate-900 font-bold border-b pb-2 text-base">Tạo tài khoản & Kho Model</h3>
@@ -538,7 +537,7 @@
             uniqueModels.forEach(m => headerHTML += `<th class="p-2 text-center whitespace-nowrap">${m}</th>`);
             headerHTML += `
                 <th class="p-2 bg-[#ffff00] text-black text-center whitespace-nowrap">TOTAL</th>
-                <th class="p-2 bg-[#d9d9d9] text-black text-center whitespace-nowrap">Tồn TT</th>
+                <th class="p-2 bg-[#d9d9d9] text-black text-center whitespace-nowrap">Tồn tháng trước</th>
                 <th class="p-2 text-center whitespace-nowrap">Dự tính</th>
             `;
             thead.innerHTML = headerHTML;
@@ -590,7 +589,7 @@
             });
         }
 
-        // --- PHÁT VẬT TƯ (ADMIN) - DẠNG LIST CẢI TIẾN ---
+        // --- PHÁT VẬT TƯ (ADMIN) ---
         function renderDistributionList() {
             const tbody = document.getElementById('distribution-tbody'); 
             if(!tbody) return;
@@ -647,16 +646,18 @@
             });
         }
 
-        // --- TIÊU HAO ---
+        // --- TIÊU HAO (DẠNG BẢNG / LIST) ---
         function renderConsumptionList() {
             document.getElementById('con-date-main').valueAsDate = new Date();
             let activeModel = currentUser.role === 'admin' ? document.getElementById('con-target-model').value : currentUser.modelName;
             
             const displayObj = document.getElementById('con-model-display');
-            displayObj.innerText = activeModel ? `Kho hiển tại: ${activeModel}` : 'Bạn chưa được gán Kho.';
+            displayObj.innerText = activeModel ? `Kho hiện tại: ${activeModel}` : 'Bạn chưa được gán Kho.';
             if(!activeModel) return;
 
-            const container = document.getElementById('consumption-list'); container.innerHTML = '';
+            const tbody = document.getElementById('consumption-list-tbody'); 
+            if(!tbody) return;
+            tbody.innerHTML = '';
             
             let visibleItems = catalogData.filter(item => {
                 const isShared = !item.assignedModels || item.assignedModels.length === 0;
@@ -665,27 +666,31 @@
             });
 
             if(visibleItems.length === 0) {
-                container.innerHTML = `<p class="col-span-full text-center py-6 text-slate-500">Không có vật tư nào hiển thị cho kho này.</p>`; return;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">Không có vật tư nào hiển thị cho kho này.</td></tr>`; return;
             }
 
             visibleItems.forEach(item => {
                 const availableQty = (item.modelBalances && item.modelBalances[activeModel]) ? Number(item.modelBalances[activeModel]) : 0;
                 
-                container.innerHTML += `
-                    <div class="border border-slate-200 rounded-xl p-4 bg-white shadow-sm flex gap-4 hover:border-amber-400">
-                        <img src="${item.image || DEFAULT_IMG}" class="w-16 h-16 object-cover border rounded shrink-0">
-                        <div class="flex-1 space-y-1 min-w-0">
-                            <h4 class="font-bold text-sm text-slate-800 truncate">${item.name}</h4>
-                            <div class="flex justify-between text-xs">
-                                <span>Mã: <strong>${item.code || '-'}</strong></span>
-                                <span>Tồn kho bạn: <strong class="${availableQty === 0 ? 'text-red-500' : 'text-amber-600'}">${availableQty}</strong></span>
-                            </div>
-                            <div class="flex gap-2 mt-2">
-                                <input type="number" id="c-qty-${item.id}" placeholder="SL trừ" min="1" max="${availableQty}" class="w-20 border border-slate-300 rounded px-2 py-1 text-sm focus:border-amber-500" ${availableQty === 0 ? 'disabled' : ''}>
-                                <button onclick="submitConsumptionInline('${item.id}')" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-2 py-1 rounded disabled:opacity-50" ${availableQty === 0 ? 'disabled' : ''}>Trừ tiêu hao</button>
-                            </div>
-                        </div>
-                    </div>`;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-b text-xs md:text-sm">
+                        <td class="p-2.5 text-center">
+                            <img src="${item.image || DEFAULT_IMG}" class="w-9 h-9 object-cover rounded border bg-white mx-auto">
+                        </td>
+                        <td class="p-2.5">
+                            <strong class="text-slate-900 text-sm">${item.name}</strong><br>
+                            <span class="text-slate-500 text-xs">Mã: ${item.code || '-'}</span>
+                        </td>
+                        <td class="p-2.5 text-center font-bold ${availableQty === 0 ? 'text-red-500 bg-red-50/30' : 'text-amber-600 bg-amber-50/50'} text-base">
+                            ${availableQty} ${item.unit ? `<span class="text-xs text-slate-500 font-normal">${item.unit}</span>` : ''}
+                        </td>
+                        <td class="p-2.5 text-center">
+                            <input type="number" id="c-qty-${item.id}" placeholder="SL trừ" min="1" max="${availableQty}" class="w-28 border border-slate-300 rounded px-2.5 py-1.5 text-center text-sm font-semibold focus:outline-none focus:border-amber-500" ${availableQty === 0 ? 'disabled' : ''}>
+                        </td>
+                        <td class="p-2.5 text-center">
+                            <button onclick="submitConsumptionInline('${item.id}')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3.5 py-1.5 rounded text-xs transition-colors shadow-sm disabled:opacity-40" ${availableQty === 0 ? 'disabled' : ''}>Trừ tiêu hao</button>
+                        </td>
+                    </tr>`;
             });
         }
 
@@ -695,7 +700,7 @@
             const qty = Number(qtyInput.value);
             const date = document.getElementById('con-date-main').value;
 
-            if(!qty || qty <= 0) return alert('Vui lòng nhập SL!');
+            if(!qty || qty <= 0) return alert('Vui lòng nhập SL hợp lệ!');
             if(!date) return alert('Vui lòng chọn ngày!');
 
             const item = catalogData.find(i => i.id === itemId);
@@ -713,7 +718,7 @@
             fbdb.ref().update(updates, (err) => {
                 if(!err) {
                     fbdb.ref('consumptions').push(newConsumption, () => {
-                        showToast(`Trừ thành công ${qty} ${item.unit}!`); qtyInput.value = ''; renderConsumptionList();
+                        showToast(`Trừ thành công ${qty} ${item.unit||''}!`); qtyInput.value = ''; renderConsumptionList();
                     });
                 }
             });
@@ -901,7 +906,7 @@
                         r[m] = q; sumModel += q;
                     });
                     r["TOTAL"] = (i.totalQty||0) + sumModel;
-                    r["Tồn TT"] = i.lastMonthQty||0;
+                    r["Tồn tháng trước"] = i.lastMonthQty||0;
                     r["Dự tính"] = i.expectedConsumption||0;
                     return r;
                 });
