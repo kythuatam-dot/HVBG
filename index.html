@@ -120,8 +120,8 @@
                 </div>
             </div>
 
-            <!-- TAB 3: PHÁT CHO MODEL -->
-            <div id="section-distribution" class="space-y-4 hidden">
+            <!-- TAB 3: PHÁT CHO MODEL & LỊCH SỬ -->
+            <div id="section-distribution" class="space-y-6 hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 justify-between items-center">
                     <div class="flex items-center gap-3 w-full md:w-auto">
                         <label class="text-sm font-bold text-slate-800 whitespace-nowrap">Chọn Kho đích để phát đến:</label>
@@ -143,13 +143,36 @@
                         <tbody id="distribution-tbody" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
+
+                <!-- BẢNG LỊCH SỬ CẤP PHÁT -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 text-sm">Lịch sử Cấp phát / Nhận từ kho tổng</h3>
+                    </div>
+                    <div class="overflow-x-auto table-container" style="max-height: 350px;">
+                        <table class="w-full text-left border-collapse text-sm relative">
+                            <thead class="sticky top-0 bg-slate-50 z-10 shadow-sm">
+                                <tr class="text-slate-700 uppercase text-xs border-b border-slate-200">
+                                    <th class="p-3">Thời gian</th>
+                                    <th class="p-3">Kho/Model</th>
+                                    <th class="p-3">Mã & Tên VT</th>
+                                    <th class="p-3 text-center">Số lượng</th>
+                                    <th class="p-3">Người thao tác</th>
+                                    <th class="p-3">Loại</th>
+                                </tr>
+                            </thead>
+                            <tbody id="distribution-history-tbody" class="divide-y divide-slate-100 bg-white">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <!-- TAB 4: TIÊU HAO -->
+            <!-- TAB 4: TIÊU HAO & NHẬN HÀNG TỪ KHO TỔNG -->
             <div id="section-consumption" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 justify-between items-center border-l-4 border-l-amber-500">
                     <div>
-                        <h3 class="font-bold text-slate-800 text-base">Nhập tiêu hao thực tế</h3>
+                        <h3 class="font-bold text-slate-800 text-base">Nhập tiêu hao & Nhận vật tư</h3>
                         <div id="con-model-display" class="text-sm font-medium text-amber-600 mt-1"></div>
                     </div>
                     <div class="flex items-center gap-2 admin-only" style="display: none;">
@@ -165,6 +188,9 @@
                 <div id="consumption-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6"></div>
 
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 text-sm">Lịch sử Tiêu hao (Trừ Model)</h3>
+                    </div>
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="bg-slate-50 text-slate-700 uppercase text-xs border-b border-slate-200">
@@ -221,7 +247,7 @@
         </main>
     </div>
 
-    <!-- CÁC MODALS GIỮ NGUYÊN HTML, CHỈ THÊM CÁC TRƯỜNG DỮ LIỆU JS -->
+    <!-- CÁC MODALS -->
     <div id="catalog-modal" class="modal-bg">
         <div class="modal">
             <h3 class="mb-4 text-slate-900 font-bold border-b pb-2 text-base">Khai báo Vật tư</h3>
@@ -285,6 +311,7 @@
         let ordersData = [];  
         let usersData = [];   
         let consumptionsData = []; 
+        let distributionsData = []; // Mảng chứa dữ liệu lịch sử nhận từ tổng / admin phát
         let uniqueModels = []; 
 
         const DEFAULT_IMG = 'https://placehold.co/100x100/e2e8f0/64748b?text=NO+IMG';
@@ -331,7 +358,7 @@
             currentTab = tab;
             ['inventory', 'orders', 'distribution', 'consumption', 'setup'].forEach(t => { document.getElementById(`section-${t}`).classList.add('hidden'); document.getElementById(`tab-${t}`).classList.remove('active', 'text-amber-500'); document.getElementById(`tab-${t}`).classList.add('text-slate-500'); });
             document.getElementById(`section-${tab}`).classList.remove('hidden'); document.getElementById(`tab-${tab}`).classList.add('active', 'text-amber-500'); document.getElementById(`tab-${tab}`).classList.remove('text-slate-500');
-            if(tab === 'distribution') renderDistributionList();
+            if(tab === 'distribution') { renderDistributionList(); renderDistributionHistory(); }
             if(tab === 'consumption') renderConsumptionList();
         }
 
@@ -340,6 +367,8 @@
             fbdb.ref('catalog').on('value', snap => { const val = snap.val(); catalogData = []; if(val) Object.keys(val).forEach(k => catalogData.push({ id: k, ...val[k] })); updateDynamicModels(); updateDropdowns(); renderAll(); });
             fbdb.ref('orders').on('value', snap => { const val = snap.val(); ordersData = []; if(val) Object.keys(val).forEach(k => ordersData.push({ id: k, ...val[k] })); renderOrders(); });
             fbdb.ref('consumptions').on('value', snap => { const val = snap.val(); consumptionsData = []; if(val) Object.keys(val).forEach(k => consumptionsData.push({ id: k, ...val[k] })); renderConsumptions(); });
+            // Lắng nghe dữ liệu lịch sử phân bổ/nhận hàng
+            fbdb.ref('distributions_history').on('value', snap => { const val = snap.val(); distributionsData = []; if(val) Object.keys(val).forEach(k => distributionsData.push({ id: k, ...val[k] })); if(currentTab === 'distribution') renderDistributionHistory(); });
         }
 
         function updateDynamicModels() {
@@ -362,7 +391,7 @@
 
         function renderAll() {
             renderInventory(); renderCatalogSetup(); 
-            if(currentTab === 'distribution') renderDistributionList();
+            if(currentTab === 'distribution') { renderDistributionList(); renderDistributionHistory(); }
             if(currentTab === 'consumption') renderConsumptionList();
         }
 
@@ -401,7 +430,6 @@
                 const expected = Number(item.expectedConsumption || 0);
                 const lastMonth = Number(item.lastMonthQty || 0);
                 
-                // Trích xuất Lịch sử Nhận & Sử dụng (hoặc lấy Tồn hiện tại nếu chưa có data)
                 const r_kt = (item.received && item.received['khoTong']) || item.totalQty || 0;
                 const u_kt = (item.used && item.used['khoTong']) || 0;
                 const t_kt = item.totalQty || 0; 
@@ -424,7 +452,6 @@
                 const isAlert = expected > 0 && totalVang < expected;
 
                 tbody.innerHTML += `
-                    <!-- 1. Dòng Nhận về -->
                     <tr class="border-t-4 border-slate-200 bg-white text-[11px] md:text-xs">
                         <td rowspan="3" class="p-1.5 md:p-2 text-center border-b-4 border-slate-200">
                             <img src="${item.image || DEFAULT_IMG}" class="w-10 h-10 object-cover rounded border bg-white mx-auto">
@@ -440,13 +467,11 @@
                         <td rowspan="3" class="p-1.5 md:p-2 text-center bg-[#d9d9d9] bg-opacity-30 border-b-4 border-slate-200 border-l border-slate-200">${lastMonth}</td>
                         <td rowspan="3" class="p-1.5 md:p-2 text-center border-b-4 border-slate-200 border-l border-slate-200 ${isAlert ? 'font-bold text-red-600 bg-red-50' : 'text-slate-500'}">${expected}</td>
                     </tr>
-                    <!-- 2. Dòng Sử dụng -->
                     <tr class="bg-orange-50/20 text-[11px] md:text-xs">
                         <td class="p-1.5 md:p-2 text-center border-b border-slate-100"><span class="bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-[10px] font-bold">Sử dụng</span></td>
                         <td class="p-1.5 md:p-2 text-center font-semibold text-orange-700 border-b border-slate-100">${u_kt}</td>
                         ${htmlDung}
                     </tr>
-                    <!-- 3. Dòng Tồn thực tế -->
                     <tr class="bg-emerald-50/30 text-[11px] md:text-xs border-b-4 border-slate-200">
                         <td class="p-1.5 md:p-2 text-center"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">Tồn TT</span></td>
                         <td class="p-1.5 md:p-2 text-center font-bold text-emerald-700">${t_kt}</td>
@@ -457,7 +482,7 @@
         }
 
         // ==============================================
-        // NGHIỆP VỤ CẬP NHẬT DATABASE THEO DÒNG NHẬN/XUẤT
+        // NGHIỆP VỤ CẬP NHẬT DATABASE
         // ==============================================
         function submitDistributionInline(itemId) {
             const targetModel = document.getElementById('dist-target-model').value;
@@ -469,14 +494,68 @@
             if(Number(item.totalQty || 0) < qty) return alert(`Kho tổng không đủ!`);
 
             const updates = {};
-            // Trừ Kho Tổng (Đã sử dụng)
+            // Trừ Kho Tổng, Cộng Kho Model
             updates[`catalog/${itemId}/totalQty`] = Number(item.totalQty || 0) - qty;
             updates[`catalog/${itemId}/used/khoTong`] = (item.used?.khoTong || 0) + qty;
-            // Cộng Kho Model (Nhận về)
             updates[`catalog/${itemId}/modelBalances/${targetModel}`] = ((item.modelBalances && item.modelBalances[targetModel]) || 0) + qty;
             updates[`catalog/${itemId}/received/${targetModel}`] = (item.received?.[targetModel] || 0) + qty;
 
-            fbdb.ref().update(updates, (err) => { if(!err) { showToast('Đã chuyển kho!'); qtyInput.value = ''; renderDistributionList(); }});
+            // Ghi log lịch sử cấp phát
+            const historyRef = fbdb.ref('distributions_history').push();
+            updates[`distributions_history/${historyRef.key}`] = {
+                date: new Date().toLocaleString('vi-VN'),
+                timestamp: Date.now(),
+                modelName: targetModel,
+                itemName: item.name,
+                itemCode: item.code || '-',
+                qty: qty,
+                username: currentUser.username,
+                type: 'Admin cấp'
+            };
+
+            fbdb.ref().update(updates, (err) => { 
+                if(!err) { showToast('Đã chuyển kho!'); qtyInput.value = ''; renderDistributionList(); }
+            });
+        }
+
+        function submitReceiveFromMain(itemId) {
+            let activeModel = currentUser.role === 'admin' ? document.getElementById('con-target-model').value : currentUser.modelName;
+            if(!activeModel) return alert('Chưa xác định kho đích!');
+            
+            const qtyInput = document.getElementById(`r-qty-${itemId}`);
+            const qty = Number(qtyInput.value);
+            if(!qty || qty <= 0) return alert('Nhập số lượng nhận hợp lệ!');
+
+            const item = catalogData.find(i => i.id === itemId);
+            if(Number(item.totalQty || 0) < qty) return alert('Kho tổng không đủ số lượng!');
+
+            const updates = {};
+            // Trừ Kho Tổng, Cộng Kho Model
+            updates[`catalog/${itemId}/totalQty`] = Number(item.totalQty || 0) - qty;
+            updates[`catalog/${itemId}/used/khoTong`] = (item.used?.khoTong || 0) + qty;
+            updates[`catalog/${itemId}/modelBalances/${activeModel}`] = ((item.modelBalances && item.modelBalances[activeModel]) || 0) + qty;
+            updates[`catalog/${itemId}/received/${activeModel}`] = (item.received?.[activeModel] || 0) + qty;
+
+            // Ghi log lịch sử cấp phát / tự rút
+            const historyRef = fbdb.ref('distributions_history').push();
+            updates[`distributions_history/${historyRef.key}`] = {
+                date: new Date().toLocaleString('vi-VN'),
+                timestamp: Date.now(),
+                modelName: activeModel,
+                itemName: item.name,
+                itemCode: item.code || '-',
+                qty: qty,
+                username: currentUser.username,
+                type: 'User tự rút'
+            };
+
+            fbdb.ref().update(updates, (err) => {
+                if(!err) { 
+                    showToast('Đã nhận từ kho tổng thành công!'); 
+                    qtyInput.value = ''; 
+                    renderConsumptionList(); 
+                }
+            });
         }
 
         function submitConsumptionInline(itemId) {
@@ -489,7 +568,6 @@
             if(currentQty < qty) return alert('Kho không đủ!');
 
             const updates = {};
-            // Trừ Tồn Model và Ghi nhận Sử Dụng
             updates[`catalog/${itemId}/modelBalances/${activeModel}`] = currentQty - qty;
             updates[`catalog/${itemId}/used/${activeModel}`] = (item.used?.[activeModel] || 0) + qty;
 
@@ -507,7 +585,6 @@
             if(!catId || actQty <= 0) return;
             const catItem = catalogData.find(i => i.id === catId);
             const updates = {};
-            // Cộng Kho Tổng và Ghi nhận Nhận Về
             updates[`catalog/${catId}/totalQty`] = Number(catItem.totalQty || 0) + actQty;
             updates[`catalog/${catId}/received/khoTong`] = (catItem.received?.khoTong || 0) + actQty;
             updates[`orders/${activeOrderId}/status`] = 'Đã nhận'; 
@@ -516,7 +593,7 @@
         }
 
         // ==============================================
-        // PHẦN CÒN LẠI CỦA LOGIC HỆ THỐNG
+        // PHẦN LOGIC HIỂN THỊ
         // ==============================================
         function renderDistributionList() {
             const tbody = document.getElementById('distribution-tbody'); if(!tbody) return; tbody.innerHTML = '';
@@ -533,24 +610,59 @@
             });
         }
 
+        function renderDistributionHistory() {
+            const tbody = document.getElementById('distribution-history-tbody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            let filtered = [...distributionsData].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            filtered.forEach(h => {
+                const typeClass = h.type === 'Admin cấp' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800';
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-slate-50">
+                        <td class="p-3 text-xs whitespace-nowrap text-slate-500">${h.date}</td>
+                        <td class="p-3 font-bold text-slate-800">${h.modelName}</td>
+                        <td class="p-3 leading-tight"><strong class="text-sm">${h.itemName}</strong> <br> <span class="text-[10px] text-slate-500">${h.itemCode}</span></td>
+                        <td class="p-3 text-center font-bold text-emerald-600">+${h.qty}</td>
+                        <td class="p-3 text-xs text-slate-600">${h.username}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-[10px] font-bold ${typeClass}">${h.type}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
         function renderConsumptionList() {
             document.getElementById('con-date-main').valueAsDate = new Date();
             let activeModel = currentUser.role === 'admin' ? document.getElementById('con-target-model').value : currentUser.modelName;
-            document.getElementById('con-model-display').innerText = activeModel ? `Kho hiển tại: ${activeModel}` : 'Bạn chưa được gán Kho.';
+            document.getElementById('con-model-display').innerText = activeModel ? `Kho hiện tại: ${activeModel}` : 'Bạn chưa được gán Kho.';
             if(!activeModel) return;
             const container = document.getElementById('consumption-list'); container.innerHTML = '';
             
             catalogData.filter(i => !i.assignedModels || i.assignedModels.length === 0 || i.assignedModels.includes(activeModel)).forEach(item => {
                 const aQty = (item.modelBalances && item.modelBalances[activeModel]) || 0;
+                const tQty = Number(item.totalQty || 0);
                 container.innerHTML += `
-                    <div class="border border-slate-200 rounded-xl p-4 bg-white shadow-sm flex gap-4 hover:border-amber-400">
-                        <img src="${item.image || DEFAULT_IMG}" class="w-16 h-16 object-cover border rounded shrink-0">
-                        <div class="flex-1 space-y-1 min-w-0">
-                            <h4 class="font-bold text-sm truncate">${item.name}</h4>
-                            <div class="flex justify-between text-xs"><span>Mã: <strong>${item.code || '-'}</strong></span><span>Tồn: <strong class="${aQty === 0 ? 'text-red-500' : 'text-amber-600'}">${aQty}</strong></span></div>
-                            <div class="flex gap-2 mt-2">
-                                <input type="number" id="c-qty-${item.id}" placeholder="SL trừ" min="1" max="${aQty}" class="w-20 border rounded px-2 py-1 text-sm" ${aQty === 0 ? 'disabled' : ''}>
-                                <button onclick="submitConsumptionInline('${item.id}')" class="flex-1 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded disabled:opacity-50" ${aQty === 0 ? 'disabled' : ''}>Trừ</button>
+                    <div class="border border-slate-200 rounded-xl p-4 bg-white shadow-sm flex flex-col gap-3 hover:border-amber-400">
+                        <div class="flex gap-3">
+                            <img src="${item.image || DEFAULT_IMG}" class="w-14 h-14 object-cover border rounded shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-sm truncate">${item.name}</h4>
+                                <span class="text-xs text-slate-500">Mã: ${item.code || '-'}</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 pt-2 border-t">
+                            <div class="space-y-1">
+                                <div class="text-[10px] font-bold text-emerald-700">Kho tổng: ${tQty}</div>
+                                <div class="flex gap-1">
+                                    <input type="number" id="r-qty-${item.id}" placeholder="Nhận" min="1" max="${tQty}" class="w-full border border-emerald-200 bg-emerald-50 rounded px-1.5 py-1 text-sm text-center focus:outline-none" ${tQty === 0 ? 'disabled' : ''}>
+                                    <button onclick="submitReceiveFromMain('${item.id}')" class="bg-emerald-600 text-white text-xs font-bold px-2 py-1 rounded disabled:opacity-50" ${tQty === 0 ? 'disabled' : ''}>Nhận</button>
+                                </div>
+                            </div>
+                            <div class="space-y-1 pl-3 border-l border-slate-100">
+                                <div class="text-[10px] font-bold text-amber-700">Kho Model: ${aQty}</div>
+                                <div class="flex gap-1">
+                                    <input type="number" id="c-qty-${item.id}" placeholder="Trừ" min="1" max="${aQty}" class="w-full border border-amber-200 bg-amber-50 rounded px-1.5 py-1 text-sm text-center focus:outline-none" ${aQty === 0 ? 'disabled' : ''}>
+                                    <button onclick="submitConsumptionInline('${item.id}')" class="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded disabled:opacity-50" ${aQty === 0 ? 'disabled' : ''}>Trừ</button>
+                                </div>
                             </div>
                         </div>
                     </div>`;
@@ -579,9 +691,7 @@
             if(file) try { image = await getBase64(file); } catch(e){}
             const data = { category: document.getElementById('c-category').value, name, image, code: document.getElementById('c-code').value, unit: document.getElementById('c-unit').value, supplier: document.getElementById('c-supplier').value, lastMonthQty: Number(document.getElementById('c-last-month').value)||0, expectedConsumption: Number(document.getElementById('c-expected').value)||0, totalQty: Number(document.getElementById('c-total-qty').value)||0, assignedModels: Array.from(document.querySelectorAll('.c-model-cb:checked')).map(cb=>cb.value) };
             
-            // Khởi tạo Lịch sử gốc khi tạo mới Vật tư
             if (!id) { data.received = { khoTong: data.totalQty }; data.used = {}; }
-
             (id ? fbdb.ref(`catalog/${id}`).update(data) : fbdb.ref('catalog').push(data)).then(() => { showToast('Đã lưu VT!'); closeCatalogModal(); });
         }
         function renderCatalogSetup() {
