@@ -296,7 +296,7 @@
         <div class="flex justify-end gap-2 mt-6 pt-3 border-t"><button onclick="closeOrderModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-200">Hủy</button><button onclick="saveOrder()" class="px-4 py-2 rounded-lg text-sm bg-amber-500 text-white font-bold">Lưu đơn</button></div>
     </div></div>
     
-    <div id="receive-modal" class="modal-bg"><div class="modal"><h3 class="mb-4 font-bold border-b pb-2">Xác nhận nhận hàng</h3><input type="hidden" id="rec-order-id"><div class="space-y-3"><div><label class="text-xs font-bold mb-1">Loại VT</label><select id="rec-catalog-id" class="w-full border rounded-lg px-3 py-2 text-sm"></select></div><div><label class="text-xs font-bold mb-1">SL Thực nhận</label><input id="rec-qty" type="number" min="1" class="w-full border rounded-lg px-3 py-2 text-sm"></div></div><div class="flex justify-end gap-2 mt-4"><button onclick="closeReceiveModal()" class="px-4 py-2 bg-slate-200 rounded-lg">Hủy</button><button onclick="confirmReceiveOrder()" class="px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg">Nhận hàng</button></div></div></div>
+    <div id="receive-modal" class="modal-bg"><div class="modal"><h3 class="mb-4 font-bold border-b pb-2">Xác nhận nhận hàng</h3><input type="hidden" id="rec-order-id"><div class="space-y-3"><div><label class="text-xs font-bold mb-1">Loại VT</label><select id="rec-catalog-id" class="w-full border rounded-lg px-3 py-2 text-sm"></select></div><div id="rec-remaining-label" class="text-xs text-slate-500"></div><div><label class="text-xs font-bold mb-1">SL Thực nhận</label><input id="rec-qty" type="number" min="1" class="w-full border rounded-lg px-3 py-2 text-sm"></div></div><div class="flex justify-end gap-2 mt-4"><button onclick="closeReceiveModal()" class="px-4 py-2 bg-slate-200 rounded-lg">Hủy</button><button id="btn-confirm-receive" onclick="confirmReceiveOrder()" class="px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg disabled:opacity-50">Nhận hàng</button></div></div></div>
 
     <div id="user-modal" class="modal-bg"><div class="modal"><h3 class="mb-4 font-bold border-b pb-2">Tài khoản & Kho</h3><input type="hidden" id="u-edit-key"><div class="space-y-3"><div><label class="text-xs font-bold mb-1">User</label><input id="u-username" type="text" class="w-full border rounded-lg px-3 py-2 text-sm"></div><div><label class="text-xs font-bold mb-1">Mật khẩu</label><input id="u-password" type="text" class="w-full border rounded-lg px-3 py-2 text-sm" value="123456"></div><div><label class="text-xs font-bold text-emerald-600 mb-1">Tên Kho</label><input id="u-model-name" type="text" class="w-full border border-emerald-300 bg-emerald-50 rounded-lg px-3 py-2 text-sm font-bold"></div></div><div class="flex justify-end gap-2 mt-4"><button onclick="closeUserModal()" class="px-4 py-2 bg-slate-200 rounded-lg">Hủy</button><button onclick="saveUser()" class="px-4 py-2 bg-amber-500 text-white font-bold rounded-lg">Lưu User</button></div></div></div>
 
@@ -569,16 +569,30 @@
         }
 
         function confirmReceiveOrder() {
+            if (!activeOrderId) return;
+            const btn = document.getElementById('btn-confirm-receive');
+            if (btn.disabled) return; // chặn bấm nhiều lần liên tiếp khi đang xử lý
             const catId = document.getElementById('rec-catalog-id').value, actQty = Number(document.getElementById('rec-qty').value);
             if(!catId || actQty <= 0) return;
+
+            const order = ordersData.find(o => o.id === activeOrderId);
+            if(!order) return;
+            const qty = Number(order.qty || 0);
+            const receivedSoFar = Number(order.actualQty || 0);
+            const remaining = Math.max(0, qty - receivedSoFar);
+            if(actQty > remaining) return alert(`Số lượng nhận vượt quá số còn lại cần nhận (còn ${remaining})!`);
+
+            btn.disabled = true; // khoá nút ngay khi xác nhận để tránh bấm/nhận trùng
             const catItem = catalogData.find(i => i.id === catId);
+            const newReceived = receivedSoFar + actQty;
+            const orderId = activeOrderId;
             const updates = {};
             // Cộng Kho Tổng và Ghi nhận Nhận Về
             updates[`catalog/${catId}/totalQty`] = Number(catItem.totalQty || 0) + actQty;
             updates[`catalog/${catId}/received/khoTong`] = (catItem.received?.khoTong || 0) + actQty;
-            updates[`orders/${activeOrderId}/status`] = 'Đã nhận'; 
-            updates[`orders/${activeOrderId}/actualQty`] = actQty;
-            fbdb.ref().update(updates).then(() => { showToast('Nhận hàng thành công!'); closeReceiveModal(); });
+            updates[`orders/${orderId}/status`] = newReceived >= qty ? 'Đã nhận' : 'Nhận một phần';
+            updates[`orders/${orderId}/actualQty`] = newReceived;
+            fbdb.ref().update(updates).then(() => { showToast('Nhận hàng thành công!'); closeReceiveModal(); }).catch(() => { btn.disabled = false; });
         }
 
         // ==============================================
@@ -725,22 +739,37 @@
         function renderOrders() {
             const tbody = document.getElementById('orders-tbody'); tbody.innerHTML = '';
             ordersData.forEach(o => {
-                const b = o.status === 'Đã nhận' ? `<span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-bold">Nhận ${o.actualQty}</span>` : `<span class="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-bold">Chưa nhận</span>`;
-                const btn = o.status === 'Đã nhận' ? `<span class="text-slate-400 text-xs">Xong</span>` : `<button onclick="openReceiveModal('${o.id}', ${o.qty})" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">Nhận</button>`;
+                const qty = Number(o.qty || 0);
+                const received = Number(o.actualQty || 0);
+                const remaining = Math.max(0, qty - received);
+                let b;
+                if (received <= 0) b = `<span class="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-bold">Chưa nhận</span>`;
+                else if (remaining > 0) b = `<span class="bg-sky-100 text-sky-800 px-2 py-1 rounded text-xs font-bold">Đã nhận ${received}/${qty}</span>`;
+                else b = `<span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-bold">Đã nhận đủ (${received})</span>`;
+                const btn = remaining > 0 ? `<button onclick="openReceiveModal('${o.id}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">Nhận</button>` : `<span class="text-slate-400 text-xs">Xong</span>`;
                 tbody.innerHTML += `<tr class="border-b"><td class="p-3.5">${o.month||''}</td><td class="p-3.5">${o.name||''}</td><td class="p-3.5 text-xs text-slate-500">${o.code||'-'}</td><td class="p-3.5 text-center">${o.qty||0}</td><td class="p-3.5">${o.expectDate||''}</td><td class="p-3.5 text-center">${b}</td><td class="p-3.5 text-center">${btn}</td></tr>`;
             });
         }
         let activeOrderId = null;
-        function openReceiveModal(id, q) {
-            activeOrderId = id;
+        function openReceiveModal(id) {
             const order = ordersData.find(o => o.id === id);
-            document.getElementById('rec-qty').value = q;
+            if (!order) return;
+            const qty = Number(order.qty || 0);
+            const received = Number(order.actualQty || 0);
+            const remaining = Math.max(0, qty - received);
+            if (remaining <= 0) { showToast('Đơn này đã nhận đủ số lượng!'); return; }
+            activeOrderId = id;
+            const qtyInput = document.getElementById('rec-qty');
+            qtyInput.value = remaining;
+            qtyInput.max = remaining;
+            document.getElementById('rec-remaining-label').innerText = `Đã đặt: ${qty} — Đã nhận: ${received} — Còn lại cần nhận: ${remaining}`;
             const sel = document.getElementById('rec-catalog-id');
-            if (order && order.catalogId) { sel.value = order.catalogId; sel.disabled = true; }
+            if (order.catalogId) { sel.value = order.catalogId; sel.disabled = true; }
             else { sel.disabled = false; }
+            document.getElementById('btn-confirm-receive').disabled = false;
             document.getElementById('receive-modal').style.display = 'flex';
         }
-        function closeReceiveModal() { document.getElementById('receive-modal').style.display = 'none'; activeOrderId = null; document.getElementById('rec-catalog-id').disabled = false; }
+        function closeReceiveModal() { document.getElementById('receive-modal').style.display = 'none'; activeOrderId = null; document.getElementById('rec-catalog-id').disabled = false; document.getElementById('btn-confirm-receive').disabled = false; }
 
         function exportExcel(type) {
             const wb = XLSX.utils.book_new();
