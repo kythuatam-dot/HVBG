@@ -14,6 +14,7 @@
         .tab-btn.active { border-bottom: 2px solid var(--amber); color: var(--amber); font-weight: bold; }
         .modal-bg { display: none; position: fixed; inset: 0; background: rgba(25,32,56,0.6); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
         .modal { background: #fff; border-radius: 8px; width: 680px; max-width: 100%; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
+        .modal.small { width: 480px; }
         .toast { position: fixed; bottom: 24px; right: 24px; background: #192038; color: #fff; padding: 12px 20px; border-radius: 6px; font-size: 13px; z-index: 60; display: none; border-left: 4px solid #f59e0b; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .toast.error { border-left-color: #ef4444; }
         .toast.success { border-left-color: #10b981; }
@@ -30,10 +31,10 @@
         .badge-danger { background: #fee2e2; color: #b91c1c; }
         .badge-success { background: #d1fae5; color: #065f46; }
         
-        /* ===== DÒNG KẺ CHO BẢNG TIÊU HAO ===== */
+        /* DÒNG KẺ CHO BẢNG TIÊU HAO */
         .row-receive { background-color: #ecfdf5; border-bottom: 1px dashed #a7f3d0; }
         .row-use { background-color: #fff7ed; border-bottom: 1px dashed #fed7aa; }
-        .row-closing { background-color: #eff6ff; border-bottom: 3px solid #475569; } /* Đường kẻ đậm phân cách vật tư */
+        .row-closing { background-color: #eff6ff; border-bottom: 3px solid #475569; }
         .row-receive td, .row-use td, .row-closing td { border-right: 1px solid #e2e8f0; }
         
         .day-cell { min-width: 40px; text-align: center; font-size: 11px; border-right: 1px solid #f1f5f9; }
@@ -44,10 +45,11 @@
         .img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; }
         .img-thumb { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0; }
         
-        /* Cột cố định */
         .col-img { position: sticky; left: 0; z-index: 11; min-width: 50px; }
         .col-name { position: sticky; left: 50px; z-index: 11; min-width: 150px; }
         .col-type { position: sticky; left: 200px; z-index: 11; min-width: 80px; }
+        
+        .danger-zone { border: 2px dashed #dc2626 !important; background-color: #fef2f2 !important; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -190,7 +192,7 @@
                 </div>
             </div>
 
-            <!-- TAB 4: TIÊU HAO — DẠNG 3 DÒNG THEO NGÀY -->
+            <!-- TAB 4: TIÊU HAO -->
             <div id="section-consumption" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 justify-between items-center border-l-4 border-l-amber-500">
                     <div>
@@ -207,13 +209,11 @@
                     </div>
                 </div>
 
-                <!-- Form nhập tiêu hao nhanh -->
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                     <h4 class="font-bold text-sm text-slate-800 mb-3">✏️ Nhập tiêu hao nhanh cho ngày hiện tại</h4>
                     <div id="consumption-quick" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
                 </div>
 
-                <!-- Bảng chi tiết 3 dòng theo ngày -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                         <h3 class="font-bold text-slate-800 text-sm">
@@ -237,7 +237,6 @@
                     </div>
                 </div>
 
-                <!-- Lịch sử tiêu hao -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-4 border-b border-slate-100">
                         <h3 class="font-bold text-slate-800 text-sm">📋 Lịch sử tiêu hao gần đây</h3>
@@ -290,7 +289,7 @@
                 </div>
             </div>
 
-            <!-- TAB 6: CÀI ĐẶT -->
+            <!-- TAB 6: CÀI ĐẶT (CÓ NÚT XÓA DỮ LIỆU) -->
             <div id="section-setup" class="space-y-6 hidden">
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
@@ -328,6 +327,20 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- VÙNG NGUY HIỂM: XÓA DỮ LIỆU -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 danger-zone">
+                    <div class="flex justify-between items-center border-b border-red-300 pb-3 mb-4">
+                        <div>
+                            <h3 class="font-bold text-base text-red-700">⚠️ Vùng nguy hiểm — Xóa toàn bộ dữ liệu</h3>
+                            <p class="text-xs text-red-600 mt-1">Hành động này sẽ xóa tất cả vật tư, đơn hàng, tồn kho, tiêu hao và lịch sử. <strong>Dữ liệu đã xóa không thể khôi phục!</strong></p>
+                        </div>
+                        <button onclick="openResetModal()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow">🗑️ Xóa toàn bộ dữ liệu</button>
+                    </div>
+                    <p class="text-xs text-slate-600">
+                        <strong>Giữ lại:</strong> Tài khoản người dùng (admin & user) sẽ được giữ nguyên để bạn tiếp tục đăng nhập.
+                    </p>
+                </div>
             </div>
 
             <!-- TAB 7: ĐÓNG KỲ -->
@@ -360,7 +373,37 @@
         </main>
     </div>
 
-    <!-- MODAL: KHAI BÁO VẬT TƯ (CÓ TẢI ẢNH) -->
+    <!-- MODAL: XÁC NHẬN XÓA TOÀN BỘ DỮ LIỆU -->
+    <div id="reset-modal" class="modal-bg">
+        <div class="modal small">
+            <div class="text-center mb-4">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span class="text-3xl">⚠️</span>
+                </div>
+                <h3 class="font-bold text-lg text-red-700 mb-2">Xác nhận xóa toàn bộ dữ liệu?</h3>
+                <p class="text-sm text-slate-600 mb-4">
+                    Hành động này sẽ xóa vĩnh viễn:<br>
+                    <strong>📦 Danh mục vật tư</strong> | 
+                    <strong>📋 Đơn hàng</strong> | 
+                    <strong>📊 Tồn kho</strong><br>
+                    <strong>📉 Tiêu hao</strong> | 
+                    <strong>📜 Lịch sử giao dịch</strong>
+                </p>
+            </div>
+            
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p class="text-xs text-red-700 font-medium mb-2">Để xác nhận, vui lòng gõ chính xác: <code class="bg-white px-2 py-0.5 rounded font-bold">XOA HET DU LIEU</code></p>
+                <input type="text" id="reset-confirm-text" oninput="checkResetConfirm()" placeholder="Gõ dòng chữ ở trên..." class="w-full border border-red-300 rounded-lg px-3 py-2 text-sm mt-1">
+            </div>
+            
+            <div class="flex justify-end gap-2">
+                <button onclick="closeResetModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-200 font-medium">Hủy</button>
+                <button id="btn-confirm-reset" onclick="executeResetAll()" disabled class="px-4 py-2 rounded-lg text-sm bg-red-600 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed">🗑️ Xóa toàn bộ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: KHAI BÁO VẬT TƯ -->
     <div id="catalog-modal" class="modal-bg">
         <div class="modal">
             <h3 class="mb-4 text-slate-900 font-bold border-b pb-2 text-base">Khai báo Vật tư</h3>
@@ -511,15 +554,6 @@
     }
 
     // ========== XỬ LÝ ẢNH ==========
-    function getBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = e => reject(e);
-        });
-    }
-
     function previewImage(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -531,7 +565,6 @@
             reader.readAsDataURL(input.files[0]);
         }
     }
-
     function removeImage() {
         document.getElementById('c-image-preview').src = '';
         document.getElementById('c-image-preview').style.display = 'none';
@@ -1097,7 +1130,6 @@
             return;
         }
         
-        // ===== TẠO HEADER =====
         let h = `
             <th class="sticky-th col-img p-2 bg-slate-100 border-b-2 border-slate-400 border-r border-slate-300 text-center">Ảnh</th>
             <th class="sticky-th col-name p-2 bg-slate-100 border-b-2 border-slate-400 border-r border-slate-300">Vật tư</th>
@@ -1105,15 +1137,13 @@
         `;
         for (let d = 1; d <= daysInMonth; d++) {
             const isToday = today === `${monthStr}-${String(d).padStart(2,'0')}`;
-            h += `<th class="sticky-th p-1 bg-slate-100 border-b-2 border-slate-400 day-cell ${isToday?'bg-amber-100':''}">${d}</th>`;
+            h += `<th class="sticky-th p-1 bg-slate-100 border-b-2 border-slate-400 day-cell ${isToday?'bg-amber-200':''}">${d}</th>`;
         }
         h += `
             <th class="sticky-th p-2 bg-slate-100 border-b-2 border-slate-400 border-l-2 border-slate-400 text-center font-bold" style="min-width:70px;">Tổng</th>
         `;
         thead.innerHTML = h;
         
-        // ===== NHÓM DỮ LIỆU THEO NGÀY =====
-        // Tiêu hao: consumptionsData theo ngày
         const consByItemDay = {};
         consumptionsData.filter(c => 
             c.modelCode === activeModel && c.date && c.date.startsWith(monthStr)
@@ -1123,7 +1153,6 @@
             consByItemDay[c.itemId][day] = (consByItemDay[c.itemId][day] || 0) + Number(c.qty || 0);
         });
         
-        // Nhận về: từ transactions loại distribute, changeQty > 0, modelName = activeModel
         const receiveByItemDay = {};
         transactionsData.filter(t => 
             t.type === 'distribute' && t.modelName === activeModel && t.changeQty > 0 
@@ -1134,7 +1163,6 @@
             receiveByItemDay[t.itemId][day] = (receiveByItemDay[t.itemId][day] || 0) + t.changeQty;
         });
         
-        // ===== RENDER TỪNG VẬT TƯ =====
         let html = '';
         let count = 0;
         const todayDay = today.startsWith(monthStr) ? Number(today.slice(8,10)) : daysInMonth;
@@ -1144,11 +1172,9 @@
             const consByDay = consByItemDay[item.id] || {};
             const recByDay = receiveByItemDay[item.id] || {};
             
-            // Tính tổng nhận và tổng tiêu
             const totalReceive = Object.values(recByDay).reduce((a,b)=>a+b, 0);
             const totalUse = Object.values(consByDay).reduce((a,b)=>a+b, 0);
             
-            // Chỉ hiển thị vật tư có phát hoặc có tiêu hoặc còn tồn
             if (totalReceive === 0 && totalUse === 0 && bal.closing === 0) return;
             count++;
             
@@ -1156,8 +1182,6 @@
                 ? `<img src="${item.image}" class="img-thumb mx-auto" style="margin-top:12px;">` 
                 : `<div class="w-8 h-8 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs" style="margin-top:12px;">📦</div>`;
             
-            // ===== TÍNH TỒN THEO TỪNG NGÀY =====
-            // Tồn đầu kỳ = closing hiện tại - tổng nhận + tổng tiêu
             const openingBalance = bal.closing - totalReceive + totalUse;
             let runningBalance = openingBalance;
             const closingByDay = {};
@@ -1171,7 +1195,7 @@
                 }
             }
             
-            // ===== DÒNG 1: NHẬN VỀ =====
+            // DÒNG 1: NHẬN VỀ
             html += `<tr class="row-receive">
                 <td class="col-img p-1 text-center bg-emerald-50 border-r border-slate-300" rowspan="3">${img}</td>
                 <td class="col-name p-2 font-medium text-sm bg-emerald-50 border-r border-slate-300" style="left:50px;" rowspan="3">
@@ -1189,7 +1213,7 @@
             }
             html += `<td class="p-1.5 text-center font-bold text-emerald-700 bg-emerald-100 border-l-2 border-slate-400">+${recTotal}</td></tr>`;
             
-            // ===== DÒNG 2: SỬ DỤNG =====
+            // DÒNG 2: SỬ DỤNG
             html += `<tr class="row-use">
                 <td class="col-type p-1.5 text-center bg-orange-100 border-r border-slate-300 font-bold" style="left:200px;">
                     <span class="badge badge-danger">Sử dụng</span>
@@ -1203,7 +1227,7 @@
             }
             html += `<td class="p-1.5 text-center font-bold text-red-600 bg-orange-100 border-l-2 border-slate-400">-${useTotal}</td></tr>`;
             
-            // ===== DÒNG 3: TỒN THỰC TẾ THEO NGÀY =====
+            // DÒNG 3: TỒN THỰC TẾ THEO NGÀY
             html += `<tr class="row-closing">
                 <td class="col-type p-1.5 text-center bg-blue-100 border-r border-slate-300 font-bold" style="left:200px;">
                     <span class="badge badge-info">Tồn TT</span>
@@ -1212,17 +1236,14 @@
             for (let d = 1; d <= daysInMonth; d++) {
                 if (d in closingByDay) {
                     const val = closingByDay[d];
-                    const isLow = val <= Number(item.expectedConsumption || 0) / 30;
-                    html += `<td class="day-cell p-1 closing-val ${val === 0 ? 'text-red-600' : ''} ${isLow && val > 0 ? 'bg-amber-100 text-amber-700' : ''}">${val}</td>`;
+                    const isLow = val <= 0;
+                    html += `<td class="day-cell p-1 closing-val ${isLow ? 'text-red-600 bg-red-50' : ''}">${val}</td>`;
                 } else {
                     html += `<td class="day-cell p-1 text-slate-300">•</td>`;
                 }
             }
             html += `<td class="p-1.5 text-center font-bold text-blue-700 text-base bg-blue-200 border-l-2 border-slate-400">${bal.closing}</td></tr>`;
         });
-        
-        document.getElementById('con-item-count')?.textContent !== undefined || 
-            (document.getElementById('con-model-name').textContent = `${activeModel} — ${count} vật tư`);
         
         if (count === 0) {
             tbody.innerHTML = `<tr><td colspan="${3 + daysInMonth + 1}" class="p-6 text-center text-slate-400">Model này chưa có phát hàng hoặc tiêu hao nào</td></tr>`;
@@ -1643,6 +1664,50 @@
             showToast(`✅ Đã đóng kỳ ${month} thành công!`);
         } catch(e) {
             showError(e.message);
+        }
+    }
+
+    // ==========================================
+    // 🆕 CHỨC NĂNG MỚI: XÓA TOÀN BỘ DỮ LIỆU
+    // ==========================================
+    function openResetModal() {
+        document.getElementById('reset-confirm-text').value = '';
+        document.getElementById('btn-confirm-reset').disabled = true;
+        document.getElementById('reset-modal').style.display = 'flex';
+    }
+    
+    function closeResetModal() {
+        document.getElementById('reset-modal').style.display = 'none';
+    }
+    
+    function checkResetConfirm() {
+        const txt = document.getElementById('reset-confirm-text').value.trim();
+        document.getElementById('btn-confirm-reset').disabled = (txt !== 'XOA HET DU LIEU');
+    }
+    
+    async function executeResetAll() {
+        const btn = document.getElementById('btn-confirm-reset');
+        btn.disabled = true;
+        btn.innerText = 'Đang xóa...';
+        
+        try {
+            // Xóa các nhánh dữ liệu, GIỮ LẠI nhánh users
+            const updates = {};
+            updates['catalog'] = null;
+            updates['balances'] = null;
+            updates['orders'] = null;
+            updates['consumptions'] = null;
+            updates['transactions'] = null;
+            
+            await fbdb.ref().update(updates);
+            
+            closeResetModal();
+            showToast('✅ Đã xóa toàn bộ dữ liệu thành công!', 'success');
+            
+        } catch(e) {
+            showError('Lỗi xóa dữ liệu: ' + e.message);
+            btn.disabled = false;
+            btn.innerText = '🗑️ Xóa toàn bộ';
         }
     }
 
