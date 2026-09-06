@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KHOVATTU PRO — Quản lý Vật tư & Phân bổ Model (Tối ưu)</title>
+    <title>KHOVATTU PRO — Quản lý Vật tư & Phân bổ Model</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,23 +41,20 @@
                 <div class="w-12 h-12 bg-amber-500 text-white font-black rounded-lg flex items-center justify-center text-xl shadow-md">KV</div>
                 <div>
                     <h1 class="font-bold text-xl text-slate-900 leading-tight">KHOVATTU PRO</h1>
-                    <p class="text-xs text-slate-500">Hệ thống Quản lý Vật tư & Phân bổ — Phiên bản Tối ưu</p>
+                    <p class="text-xs text-slate-500">Hệ thống Quản lý Vật tư & Phân bổ</p>
                 </div>
             </div>
             <div id="login-error" class="text-red-500 text-xs mb-3 font-semibold bg-red-50 p-2.5 rounded hidden"></div>
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tài khoản</label>
-                    <input id="login-user" type="text" placeholder="admin hoặc tên user..." class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-500">
+                    <input id="login-user" type="text" placeholder="Nhập tài khoản..." class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-500">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Mật khẩu</label>
                     <input id="login-pass" type="password" placeholder="••••••••" class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-amber-500">
                 </div>
                 <button onclick="doLogin()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-lg text-sm transition-all shadow-md">Đăng nhập</button>
-            </div>
-            <div class="mt-4 text-xs text-slate-500 bg-slate-50 p-3 rounded">
-                <span class="font-bold">Tài khoản mặc định:</span> admin / 123456
             </div>
         </div>
     </div>
@@ -88,7 +85,7 @@
         </div>
         <main class="flex-1 max-w-full w-full mx-auto p-4 md:p-6 space-y-5">
             
-            <!-- TAB 1: TỒN KHO TỔNG (Đã tối ưu cấu trúc) -->
+            <!-- TAB 1: TỒN KHO TỔNG -->
             <div id="section-inventory" class="space-y-4">
                 <div id="inv-toolbar" class="sticky z-30 bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 justify-between items-center">
                     <div class="flex gap-2 items-center w-full md:w-auto">
@@ -104,7 +101,7 @@
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div id="inv-table-title" class="p-4 border-b border-slate-100 flex justify-between items-center">
-                        <h3 class="font-bold text-slate-800 text-sm">Bảng Tồn kho — Dạng 3 Dòng (Nhận về - Sử dụng - Tồn Thực tế)</h3>
+                        <h3 class="font-bold text-slate-800 text-sm">Bảng Tồn kho</h3>
                         <span class="text-xs text-slate-500" id="inv-count">0 mục</span>
                     </div>
                     <div id="inv-table-container" class="overflow-x-auto table-container">
@@ -158,7 +155,7 @@
                         <label class="text-sm font-bold text-slate-800 whitespace-nowrap">Chọn Kho đích:</label>
                         <select id="dist-target-model" class="border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-amber-600 bg-amber-50 w-full md:w-64"></select>
                     </div>
-                    <p class="text-xs text-slate-500">* Hệ thống tự trừ tồn cũ trước, sau đó mới trừ tồn hiện tại</p>
+                    <p class="text-xs text-slate-500">* Hệ thống tự trừ tồn kho tổng</p>
                 </div>
                 
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -210,10 +207,10 @@
                 </div>
             </div>
 
-            <!-- TAB 5: LỊCH SỬ GIAO DỊCH -->
+            <!-- TAB 5: LỊCH SỬ -->
             <div id="section-transactions" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 justify-between items-center">
-                    <h3 class="font-bold text-slate-800 text-sm">📜 Lịch sử thay đổi số lượng vật tư</h3>
+                    <h3 class="font-bold text-slate-800 text-sm">📜 Lịch sử thay đổi số lượng</h3>
                     <div class="flex gap-2">
                         <input id="trans-search" type="text" placeholder="Tên vật tư..." oninput="renderTransactions()" class="border border-slate-300 rounded px-3 py-1.5 text-sm w-64">
                         <select id="trans-filter-type" onchange="renderTransactions()" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
@@ -271,8 +268,8 @@
                         <table class="w-full text-left border-collapse text-xs">
                             <thead>
                                 <tr class="bg-slate-50 text-slate-700 uppercase border-b">
-                                    <th class="p-2.5">Tên thiết bị</th>
-                                    <th class="p-2.5 text-center">Kho Tổng</th>
+                                    <th class="p-2.5">Tên vật tư</th>
+                                    <th class="p-2.5 text-center">Tồn đầu kỳ</th>
                                     <th class="p-2.5 text-center">Dự tính/tháng</th>
                                     <th class="p-2.5 text-center">Thao tác</th>
                                 </tr>
@@ -291,20 +288,19 @@
                         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <p class="text-blue-800 font-medium mb-2">ℹ️ Chức năng này sẽ:</p>
                             <ul class="list-disc list-inside text-blue-700 space-y-1 text-xs">
-                                <li>Lấy Tồn Cuối Kỳ hiện tại làm <strong>Tồn Đầu Kỳ</strong> cho tháng sau</li>
+                                <li>Lấy Tồn Cuối Kỳ làm Tồn Đầu Kỳ cho tháng sau</li>
                                 <li>Reset số liệu Nhận hàng & Sử dụng về 0</li>
-                                <li>Ghi toàn bộ thay đổi vào Lịch sử giao dịch</li>
-                                <li>Không xóa bất kỳ dữ liệu nào cũ</li>
+                                <li>Ghi thay đổi vào Lịch sử giao dịch</li>
                             </ul>
                         </div>
                         <div class="space-y-3">
                             <div>
-                                <label class="block text-xs font-bold text-slate-600 mb-1">Kỳ cần đóng (Tháng/Năm)</label>
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Kỳ cần đóng</label>
                                 <input id="period-close-month" type="month" class="w-full border rounded-lg px-3 py-2">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-600 mb-1">Ghi chú kỳ</label>
-                                <input id="period-note" type="text" placeholder="Ví dụ: Đóng kỳ tháng 9/2026" class="w-full border rounded-lg px-3 py-2">
+                                <label class="block text-xs font-bold text-slate-600 mb-1">Ghi chú</label>
+                                <input id="period-note" type="text" placeholder="Đóng kỳ tháng..." class="w-full border rounded-lg px-3 py-2">
                             </div>
                         </div>
                         <button id="btn-close-period" onclick="executeClosePeriod()" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg transition-colors">🔒 Thực hiện Đóng Kỳ</button>
@@ -329,19 +325,10 @@
                     <div><label class="block text-xs font-bold mb-1">Đơn vị</label><input id="c-unit" type="text" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
                     <div><label class="block text-xs font-bold mb-1">NCC</label><input id="c-supplier" type="text" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1">Ảnh (Tải lên)</label>
-                    <input type="file" id="c-image-file" accept="image/*" class="w-full border rounded-lg px-3 py-1.5 text-sm">
-                    <input type="hidden" id="c-image-url">
-                </div>
                 <div class="grid grid-cols-3 gap-3 pt-2 border-t">
                     <div><label class="block text-xs font-bold mb-1">Tồn Đầu Kỳ</label><input id="c-last-month" type="number" value="0" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
                     <div><label class="block text-xs font-bold mb-1 text-red-600">Dự tính/tháng</label><input id="c-expected" type="number" value="0" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
                     <div><label class="block text-xs font-bold mb-1 text-emerald-600">Nhập kho lần đầu</label><input id="c-total-qty" type="number" value="0" class="w-full border border-emerald-300 bg-emerald-50 rounded-lg px-3 py-2 text-sm"></div>
-                </div>
-                <div class="pt-3 border-t mt-2">
-                    <label class="block text-xs font-bold mb-1">Phân bổ sử dụng cho Model</label>
-                    <div id="c-model-checkboxes" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-6 pt-3 border-t">
@@ -354,7 +341,6 @@
     <div id="order-modal" class="modal-bg"><div class="modal">
         <h3 id="order-modal-title" class="mb-4 text-slate-900 font-bold border-b pb-2 text-base">Tạo đơn đặt hàng</h3>
         <input type="hidden" id="o-catalog-id">
-        <div id="order-modal-new-hint" class="hidden text-[11px] text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">Đây là mã vật tư mới — hệ thống sẽ tự tạo mục vật tư khi lưu đơn.</div>
         <div class="space-y-3.5">
             <div class="grid grid-cols-2 gap-3">
                 <div><label class="block text-xs font-bold uppercase text-slate-600 mb-1">Tháng</label><input id="o-month" type="text" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm"></div>
@@ -368,19 +354,19 @@
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <div><label class="block text-xs font-bold uppercase text-slate-600 mb-1">SL Đặt</label><input id="o-qty" type="number" min="1" value="1" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm"></div>
-                <div><label class="block text-xs font-bold uppercase text-slate-600 mb-1">Ngày về (DK)</label><input id="o-expect-date" type="date" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm"></div>
+                <div><label class="block text-xs font-bold uppercase text-slate-600 mb-1">Ngày về</label><input id="o-expect-date" type="date" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm"></div>
             </div>
         </div>
         <div class="flex justify-end gap-2 mt-6 pt-3 border-t"><button onclick="closeOrderModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-200">Hủy</button><button onclick="saveOrder()" class="px-4 py-2 rounded-lg text-sm bg-amber-500 text-white font-bold">Lưu đơn</button></div>
     </div></div>
     
-    <div id="receive-modal" class="modal-bg"><div class="modal"><h3 class="mb-4 font-bold border-b pb-2">Xác nhận nhận hàng</h3><input type="hidden" id="rec-order-id"><div class="space-y-3"><div><label class="text-xs font-bold mb-1">Vật tư</label><select id="rec-catalog-id" class="w-full border rounded-lg px-3 py-2 text-sm"></select></div><div id="rec-remaining-label" class="text-xs text-slate-500"></div><div><label class="text-xs font-bold mb-1">SL Thực nhận</label><input id="rec-qty" type="number" min="1" class="w-full border rounded-lg px-3 py-2 text-sm"></div><div><label class="text-xs font-bold mb-1">Ghi chú</label><input id="rec-note" type="text" placeholder="VD: Nhận hàng từ NCC..." class="w-full border rounded-lg px-3 py-2 text-sm"></div></div><div class="flex justify-end gap-2 mt-4"><button onclick="closeReceiveModal()" class="px-4 py-2 bg-slate-200 rounded-lg">Hủy</button><button id="btn-confirm-receive" onclick="confirmReceiveOrder()" class="px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg disabled:opacity-50">Nhận hàng</button></div></div></div>
-    <div id="user-modal" class="modal-bg"><div class="modal"><h3 class="mb-4 font-bold border-b pb-2">Tài khoản & Kho</h3><input type="hidden" id="u-edit-key"><div class="space-y-3"><div><label class="text-xs font-bold mb-1">User</label><input id="u-username" type="text" class="w-full border rounded-lg px-3 py-2 text-sm"></div><div><label class="text-xs font-bold mb-1">Mật khẩu</label><input id="u-password" type="text" class="w-full border rounded-lg px-3 py-2 text-sm" value="123456"></div><div><label class="text-xs font-bold text-emerald-600 mb-1">Tên Kho / Model</label><input id="u-model-name" type="text" class="w-full border border-emerald-300 bg-emerald-50 rounded-lg px-3 py-2 text-sm font-bold"></div></div><div class="flex justify-end gap-2 mt-4"><button onclick="closeUserModal()" class="px-4 py-2 bg-slate-200 rounded-lg">Hủy</button><button onclick="saveUser()" class="px-4 py-2 bg-amber-500 text-white font-bold rounded-lg">Lưu User</button></div></div></div>
+    <div id="receive-modal" class="modal-bg"><div class="modal"><h3 class="mb-4 font-bold border-b pb-2">Xác nhận nhận hàng</h3><input type="hidden" id="rec-order-id"><div class="space-y-3"><div><label class="text-xs font-bold mb-1">Vật tư</label><select id="rec-catalog-id" class="w-full border rounded-lg px-3 py-2 text-sm"></select></div><div><label class="text-xs font-bold mb-1">SL Thực nhận</label><input id="rec-qty" type="number" min="1" class="w-full border rounded-lg px-3 py-2 text-sm"></div><div><label class="text-xs font-bold mb-1">Ghi chú</label><input id="rec-note" type="text" class="w-full border rounded-lg px-3 py-2 text-sm"></div></div><div class="flex justify-end gap-2 mt-4"><button onclick="closeReceiveModal()" class="px-4 py-2 bg-slate-200 rounded-lg">Hủy</button><button id="btn-confirm-receive" onclick="confirmReceiveOrder()" class="px-4 py-2 bg-emerald-600 text-white font-bold rounded-lg">Nhận hàng</button></div></div></div>
+    <div id="user-modal" class="modal-bg"><div class="modal"><h3 class="mb-4 font-bold border-b pb-2">Tài khoản & Kho</h3><input type="hidden" id="u-edit-key"><div class="space-y-3"><div><label class="text-xs font-bold mb-1">Tài khoản</label><input id="u-username" type="text" class="w-full border rounded-lg px-3 py-2 text-sm"></div><div><label class="text-xs font-bold mb-1">Mật khẩu</label><input id="u-password" type="text" class="w-full border rounded-lg px-3 py-2 text-sm" value="123456"></div><div><label class="text-xs font-bold text-emerald-600 mb-1">Tên Kho / Model</label><input id="u-model-name" type="text" class="w-full border border-emerald-300 bg-emerald-50 rounded-lg px-3 py-2 text-sm font-bold"></div></div><div class="flex justify-end gap-2 mt-4"><button onclick="closeUserModal()" class="px-4 py-2 bg-slate-200 rounded-lg">Hủy</button><button onclick="saveUser()" class="px-4 py-2 bg-amber-500 text-white font-bold rounded-lg">Lưu User</button></div></div></div>
     <div id="toast" class="toast">Thành công!</div>
 
     <script>
     // ==========================================
-    // KHỞI TẠO & KẾT NỐI DỮ LIỆU
+    // KẾT NỐI FIREBASE
     // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyCB2xCKZVvVz-z-t5Vz11B_KFFyJdQH1_o",
@@ -402,12 +388,10 @@
     let usersData = [];   
     let consumptionsData = []; 
     let transactionsData = [];
-    let balancesData = {}; // CẤU TRÚC MỚI: balances[itemId][modelName] = { received, used, updatedAt }
+    let balancesData = {}; 
     let uniqueModels = []; 
     let currentTab = 'inventory';
-    let activeOrderId = null;
-    let isSaving = false; // Khóa tránh lưu trùng
-    const DEFAULT_IMG = 'https://placehold.co/100x100/e2e8f0/64748b?text=NO+IMG';
+    let isSaving = false;
 
     // ========== HÀM THÔNG BÁO ==========
     function showToast(msg, type='success') {
@@ -419,32 +403,50 @@
     }
     function showError(msg) { showToast('❌ ' + msg, 'error'); }
 
-    // ========== CHUYỂN ĐỊNH DẠNG NGÀY ==========
+    // ========== ĐỊNH DẠNG NGÀY ==========
     function todayStr() { return new Date().toISOString().slice(0,10); }
     function nowISO() { return new Date().toISOString(); }
 
-    // ========== HÀM CHUYỂN ĐỔI HÌNH ẢNH ==========
-    function getBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader(); reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result); reader.onerror = e => reject(e);
-        });
-    }
+    // ==========================================
+    // HỆ THỐNG ĐĂNG NHẬP — ĐÃ SỬA LỖI
+    // ==========================================
+    async function doLogin() {
+        const u = document.getElementById('login-user').value.trim();
+        const p = document.getElementById('login-pass').value.trim();
+        document.getElementById('login-error').classList.add('hidden');
 
-    // ==========================================
-    // HỆ THỐNG ĐĂNG NHẬP / PHÂN QUYỀN
-    // ==========================================
-    function doLogin() {
-        const u = document.getElementById('login-user').value.trim(), p = document.getElementById('login-pass').value.trim();
+        // Tải dữ liệu users trước
+        const snap = await fbdb.ref('users').once('value');
+        usersData = [];
+        if (snap.val()) {
+            Object.keys(snap.val()).forEach(k => {
+                usersData.push({ id: k, ...snap.val()[k] });
+            });
+        }
+
+        // Tạo tài khoản admin mặc định nếu chưa có
+        if (!usersData.find(i => i.username === 'admin')) {
+            await fbdb.ref('users/admin').set({
+                username: 'admin',
+                password: '123456',
+                modelName: 'Kho Tổng',
+                role: 'admin',
+                createdAt: nowISO()
+            });
+            usersData.push({ id: 'admin', username: 'admin', password: '123456', modelName: 'Kho Tổng', role: 'admin' });
+        }
+
+        // Kiểm tra đăng nhập
         if (u === 'admin' && p === '123456') { 
-            currentUser = { role: 'admin', username: 'admin', displayName: 'Quản trị viên' }; 
+            currentUser = { role: 'admin', username: 'admin', displayName: 'Quản trị viên', modelName: 'Kho Tổng' }; 
             localStorage.setItem('kv_session', JSON.stringify(currentUser)); 
             checkAuth(); 
             return; 
         }
+
         const found = usersData.find(i => i.username === u && i.password === p);
         if (found) { 
-            currentUser = { role: 'user', username: found.username, modelName: found.modelName, displayName: found.username }; 
+            currentUser = { role: found.role || 'user', username: found.username, modelName: found.modelName, displayName: found.username }; 
             localStorage.setItem('kv_session', JSON.stringify(currentUser)); 
             checkAuth(); 
         } else { 
@@ -452,23 +454,34 @@
             document.getElementById('login-error').classList.remove('hidden'); 
         }
     }
-    function doLogout() { localStorage.removeItem('kv_session'); currentUser = null; checkAuth(); }
+    function doLogout() { 
+        localStorage.removeItem('kv_session'); 
+        currentUser = null; 
+        checkAuth(); 
+        showToast('Đã đăng xuất');
+    }
     function checkAuth() {
         const session = localStorage.getItem('kv_session');
         if (session) {
-            currentUser = JSON.parse(session);
+            try { currentUser = JSON.parse(session); } catch { currentUser = null; localStorage.removeItem('kv_session'); }
+        }
+        
+        if (currentUser) {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
             applyPermissions();
+            initFirebaseListeners();
             updateDynamicModels(); 
             renderAll();
             document.getElementById('current-period').textContent = `📅 Kỳ hiện tại: ${todayStr().slice(0,7)}`;
+            document.getElementById('con-date-main').value = todayStr();
         } else { 
             document.getElementById('login-screen').classList.remove('hidden'); 
             document.getElementById('app-screen').classList.add('hidden'); 
         }
     }
     function applyPermissions() {
+        if (!currentUser) return;
         if (currentUser.role === 'admin') { 
             document.getElementById('user-badge').innerText = "QUYỀN: ADMIN"; 
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = ''); 
@@ -477,10 +490,13 @@
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none'); 
             if(['distribution', 'setup', 'orders', 'transactions', 'period'].includes(currentTab)) switchTab('consumption'); 
         }
+        if (currentUser.modelName) {
+            document.getElementById('con-model-display').textContent = `Kho: ${currentUser.modelName}`;
+        }
     }
 
     // ==========================================
-    // HỆ THỐNG LẮNG NGHE DỮ LIỆU FIREBASE
+    // LẮNG NGHE DỮ LIỆU FIREBASE
     // ==========================================
     function initFirebaseListeners() {
         fbdb.ref('users').on('value', snap => { 
@@ -488,7 +504,6 @@
             if(val) Object.keys(val).forEach(k => usersData.push({ id: k, ...val[k] })); 
             updateDynamicModels(); 
             renderUsers(); 
-            if(!currentUser && localStorage.getItem('kv_session')) checkAuth(); 
         });
 
         fbdb.ref('catalog').on('value', snap => { 
@@ -499,9 +514,8 @@
             renderAll(); 
         });
 
-        // BẢNG TỒN KHO MỚI — TÁCH RIÊNG KHỎI CATALOG
         fbdb.ref('balances').on('value', snap => { 
-            const val = snap.val(); balancesData = val || {}; 
+            balancesData = snap.val() || {}; 
             renderAll(); 
         });
 
@@ -517,7 +531,6 @@
             renderConsumptions(); 
         });
 
-        // LỊCH SỬ GIAO DỊCH
         fbdb.ref('transactions').orderByChild('createdAt').limitToLast(150).on('value', snap => { 
             const val = snap.val(); transactionsData = []; 
             if(val) Object.keys(val).forEach(k => transactionsData.push({ id: k, ...val[k] })); 
@@ -527,14 +540,13 @@
     }
 
     // ==========================================
-    // HÀM TÍNH TỒN KHO (TRUNG TÂM — NHẤT QUÁN)
+    // TÍNH TỒN KHO
     // ==========================================
     function getBalance(itemId, modelName) {
         const bal = balancesData[itemId]?.[modelName] || {};
         const received = Number(bal.received || 0);
         const used = Number(bal.used || 0);
-        const closing = received - used;
-        return { received, used, closing };
+        return { received, used, closing: received - used };
     }
 
     function getTotalAvailable(item) {
@@ -544,7 +556,7 @@
     }
 
     // ==========================================
-    // HÀM GHI GIAO DỊCH VÀ CẬP NHẬT SỐ LƯỢNG
+    // CẬP NHẬT SỐ LƯỢNG & GHI LỊCH SỬ
     // ==========================================
     async function updateBalanceWithLog(itemId, modelName, changeQty, transType, note='') {
         if (isSaving) return { ok: false, error: 'Đang xử lý, vui lòng chờ...' };
@@ -553,7 +565,6 @@
         const item = catalogData.find(i => i.id === itemId);
         if (!item) { isSaving = false; return { ok: false, error: 'Không tìm thấy vật tư' }; }
 
-        // Kho đặc biệt: khoTong có thêm Tồn Đầu Kỳ
         let available;
         if (modelName === 'khoTong') {
             available = getTotalAvailable(item);
@@ -575,19 +586,11 @@
         updates[`${balRef}/${field}`] = currentVal + Math.abs(changeQty);
         updates[`${balRef}/updatedAt`] = nowISO();
 
-        // Ghi LỊCH SỬ GIAO DỊCH
         const transId = Date.now().toString();
         updates[`transactions/${transId}`] = {
-            itemId,
-            itemName: item.name,
-            itemCode: item.code || '',
-            modelName,
-            changeQty: changeQty,
-            type: transType,
-            note: note,
-            username: currentUser.username,
-            role: currentUser.role,
-            createdAt: nowISO()
+            itemId, itemName: item.name, itemCode: item.code || '',
+            modelName, changeQty: changeQty, type: transType, note: note,
+            username: currentUser.username, createdAt: nowISO()
         };
 
         try {
@@ -596,4 +599,89 @@
             return { ok: true };
         } catch (e) {
             isSaving = false;
-           
+            return { ok: false, error: e.message };
+        }
+    }
+
+    // ==========================================
+    // CẬP NHẬT DANH SÁCH KHO/MODEL
+    // ==========================================
+    function updateDynamicModels() {
+        const models = new Set();
+        models.add('khoTong');
+        usersData.forEach(u => { if(u.modelName) models.add(u.modelName); });
+        uniqueModels = Array.from(models);
+        
+        const distSel = document.getElementById('dist-target-model');
+        const conSel = document.getElementById('con-target-model');
+        if (distSel) { distSel.innerHTML = uniqueModels.map(m=>`<option value="${m}">${m}</option>`).join(''); }
+        if (conSel) { conSel.innerHTML = uniqueModels.map(m=>`<option value="${m}">${m}</option>`).join(''); }
+        if (currentUser && currentUser.modelName) {
+            if (distSel) distSel.value = currentUser.modelName;
+            if (conSel) conSel.value = currentUser.modelName;
+        }
+    }
+
+    function updateDropdowns() {
+        const sel = document.getElementById('filter-cat');
+        if (!sel) return;
+        const cats = [...new Set(catalogData.map(i=>i.category).filter(Boolean))];
+        sel.innerHTML = '<option value="">Tất cả loại vật tư</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+    }
+
+    // ==========================================
+    // CHUYỂN TAB & RENDER TOÀN BỘ
+    // ==========================================
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(b=>{ 
+            b.classList.remove('active'); b.classList.add('text-slate-500'); 
+        });
+        document.getElementById(`tab-${tab}`)?.classList.add('active');
+        document.getElementById(`tab-${tab}`)?.classList.remove('text-slate-500');
+        
+        document.querySelectorAll('[id^="section-"]').forEach(s=>s.classList.add('hidden'));
+        document.getElementById(`section-${tab}`)?.classList.remove('hidden');
+        
+        if (tab === 'inventory') renderInventory();
+        if (tab === 'orders') renderOrders();
+        if (tab === 'distribution') renderDistribution();
+        if (tab === 'consumption') renderConsumptionList();
+        if (tab === 'transactions') renderTransactions();
+    }
+
+    function renderAll() {
+        renderInventory();
+        renderOrders();
+        renderDistribution();
+        renderConsumptionList();
+        renderTransactions();
+        renderCatalog();
+        renderUsers();
+    }
+
+    // ==========================================
+    // RENDER TỒN KHO
+    // ==========================================
+    function renderInventory() {
+        const search = (document.getElementById('search-inv')?.value || '').toLowerCase();
+        const catFilter = document.getElementById('filter-cat')?.value || '';
+        const onlyLow = document.getElementById('filter-low-stock')?.checked;
+
+        let filtered = catalogData.filter(item => {
+            const q = `${item.name} ${item.code||''} ${item.supplier||''}`.toLowerCase();
+            const matchSearch = !search || q.includes(search);
+            const matchCat = !catFilter || item.category === catFilter;
+            return matchSearch && matchCat;
+        });
+
+        if (onlyLow) {
+            filtered = filtered.filter(item => {
+                const avail = getTotalAvailable(item);
+                return avail <= Number(item.expected || 0);
+            });
+        }
+
+        const thead = document.getElementById('inv-thead-tr');
+        thead.innerHTML = `
+            <th class
