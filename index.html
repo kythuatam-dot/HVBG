@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOSIDEN-AM — Quản lý Vật tư tiêu hao kỹ thuật</title>
+    <title>KHOVATTU PRO — Quản lý Vật tư & Phân bổ</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,14 +13,15 @@
         body { background-color: var(--bg); font-family: system-ui, -apple-system, sans-serif; color: #1e293b; }
         .tab-btn.active { border-bottom: 2px solid var(--amber); color: var(--amber); font-weight: bold; }
         .modal-bg { display: none; position: fixed; inset: 0; background: rgba(25,32,56,0.6); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
-        .modal { background: #fff; border-radius: 8px; width: 650px; max-width: 100%; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
+        .modal { background: #fff; border-radius: 8px; width: 680px; max-width: 100%; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
         .toast { position: fixed; bottom: 24px; right: 24px; background: #192038; color: #fff; padding: 12px 20px; border-radius: 6px; font-size: 13px; z-index: 60; display: none; border-left: 4px solid #f59e0b; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .toast.error { border-left-color: #ef4444; }
         .toast.success { border-left-color: #10b981; }
         .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
         .table-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .table-container { overflow-y: auto; max-height: 60vh; }
+        .table-container { overflow-y: auto; max-height: 65vh; }
         .sticky-th { position: sticky; top: 0; z-index: 20; }
+        .sticky-col { position: sticky; left: 0; z-index: 10; background: inherit; }
         .low-stock { background-color: #fef2f2 !important; color: #dc2626 !important; font-weight: bold; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
@@ -28,6 +29,13 @@
         .badge-warning { background: #fef3c7; color: #92400e; }
         .badge-danger { background: #fee2e2; color: #b91c1c; }
         .badge-success { background: #d1fae5; color: #065f46; }
+        .row-receive { background-color: #ecfdf5; }
+        .row-use { background-color: #fff7ed; }
+        .row-closing { background-color: #eff6ff; border-bottom: 3px solid #cbd5e1; }
+        .day-cell { min-width: 40px; text-align: center; font-size: 11px; }
+        .day-cell.has-value { background-color: #fee2e2; color: #b91c1c; font-weight: bold; }
+        .img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .img-thumb { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -36,10 +44,10 @@
     <div id="login-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-4 z-50">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border border-slate-100">
             <div class="flex items-center gap-3 mb-6">
-                <div class="w-12 h-12 bg-amber-500 text-white font-black rounded-lg flex items-center justify-center text-xl shadow-md">HVBG</div>
+                <div class="w-12 h-12 bg-amber-500 text-white font-black rounded-lg flex items-center justify-center text-xl shadow-md">KV</div>
                 <div>
-                    <h1 class="font-bold text-xl text-slate-900 leading-tight">HOSIDEN-AM</h1>
-                    <p class="text-xs text-slate-500">Hệ thống quản lý tiêu hao kỹ thuật</p>
+                    <h1 class="font-bold text-xl text-slate-900 leading-tight">KHOVATTU PRO</h1>
+                    <p class="text-xs text-slate-500">Hệ thống Quản lý Vật tư & Phân bổ</p>
                 </div>
             </div>
             <div id="login-error" class="text-red-500 text-xs mb-3 font-semibold bg-red-50 p-2.5 rounded hidden"></div>
@@ -62,8 +70,8 @@
         <div id="app-topbar" class="sticky top-0 z-40">
             <header class="bg-[#192038] text-white px-6 py-3.5 flex justify-between items-center shadow-md">
                 <div class="flex items-center gap-3">
-                    <span class="bg-amber-500 text-xs font-black px-2.5 py-1.5 rounded shadow">HVBG</span>
-                    <span class="font-bold tracking-wide text-sm md:text-base hidden md:block">Hệ thống quản lý tiêu hao kỹ thuật</span>
+                    <span class="bg-amber-500 text-xs font-black px-2.5 py-1.5 rounded shadow">KV</span>
+                    <span class="font-bold tracking-wide text-sm md:text-base hidden md:block">QUẢN LÝ VẬT TƯ & PHÂN BỔ MODEL</span>
                     <span id="user-badge" class="ml-2 text-[10px] bg-slate-800 border border-slate-700 px-2.5 py-1 rounded text-amber-400 font-bold uppercase"></span>
                 </div>
                 <div class="flex items-center gap-3">
@@ -84,7 +92,7 @@
 
         <main class="flex-1 max-w-full w-full mx-auto p-4 md:p-6 space-y-5">
             
-            <!-- TAB 1: TỒN KHO -->
+            <!-- TAB 1: TỒN KHO TỔNG -->
             <div id="section-inventory" class="space-y-4">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 justify-between items-center">
                     <div class="flex gap-2 items-center w-full md:w-auto">
@@ -100,7 +108,7 @@
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-                        <h3 class="font-bold text-slate-800 text-sm">Bảng Tồn kho chi tiết</h3>
+                        <h3 class="font-bold text-slate-800 text-sm">Bảng Tồn kho tổng</h3>
                         <span class="text-xs text-slate-500" id="inv-count">0 mục</span>
                     </div>
                     <div class="overflow-x-auto table-container">
@@ -170,24 +178,54 @@
                 </div>
             </div>
 
-            <!-- TAB 4: TIÊU HAO -->
+            <!-- TAB 4: TIÊU HAO — DẠNG 3 DÒNG CHI TIẾT TỪNG MODEL -->
             <div id="section-consumption" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 justify-between items-center border-l-4 border-l-amber-500">
                     <div>
-                        <h3 class="font-bold text-slate-800 text-base">Nhập tiêu hao thực tế</h3>
-                        <div id="con-model-display" class="text-sm font-medium text-amber-600 mt-1"></div>
+                        <h3 class="font-bold text-slate-800 text-base">📊 Tiêu hao chi tiết theo Model</h3>
+                        <p class="text-xs text-slate-500 mt-1">Dạng 3 dòng: Nhận về → Sử dụng theo ngày → Tồn thực tế</p>
                     </div>
-                    <div class="flex items-center gap-2 admin-only" style="display: none;">
-                        <label class="text-xs font-bold text-slate-500">Admin xem kho:</label>
-                        <select id="con-target" onchange="renderConsumptionList()" class="border border-slate-300 rounded px-2 py-1 text-sm"></select>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600">Chọn Model/Kho:</label>
+                        <select id="con-model-select" onchange="renderConsumptionDetail()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-amber-600 bg-amber-50 focus:outline-none"></select>
                     </div>
-                    <div class="flex gap-2 items-center">
-                        <label class="text-xs font-bold text-slate-600">Ngày:</label>
-                        <input id="con-date" type="date" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600">Tháng:</label>
+                        <input id="con-month-select" type="month" onchange="renderConsumptionDetail()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
                     </div>
                 </div>
-                <div id="consumption-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6"></div>
+
+                <!-- Form nhập tiêu hao nhanh -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="font-bold text-sm text-slate-800 mb-3">✏️ Nhập tiêu hao nhanh cho ngày hiện tại</h4>
+                    <div id="consumption-quick" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+                </div>
+
+                <!-- Bảng chi tiết 3 dòng -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800 text-sm">
+                            Bảng chi tiết tiêu hao — <span id="con-model-name" class="text-amber-600">--</span>
+                        </h3>
+                        <span class="text-xs text-slate-500" id="con-item-count">0 vật tư</span>
+                    </div>
+                    <div class="overflow-x-auto table-container">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr id="con-thead" class="bg-slate-50 text-slate-700 uppercase text-xs border-b border-slate-200"></tr>
+                            </thead>
+                            <tbody id="consumption-tbody" class="divide-y divide-slate-100">
+                                <tr><td class="p-6 text-center text-slate-400">Chọn Model để xem chi tiết</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Lịch sử tiêu hao -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 text-sm">📋 Lịch sử tiêu hao gần đây</h3>
+                    </div>
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="bg-slate-50 text-slate-700 uppercase text-xs border-b border-slate-200">
@@ -198,12 +236,12 @@
                                 <th class="p-3">Người nhập</th>
                             </tr>
                         </thead>
-                        <tbody id="consumption-tbody" class="divide-y divide-slate-100"></tbody>
+                        <tbody id="consumption-history-tbody" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- TAB 5: LỊCH SỬ -->
+            <!-- TAB 5: LỊCH SỬ GIAO DỊCH -->
             <div id="section-transactions" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-3 justify-between items-center">
                     <h3 class="font-bold text-slate-800 text-sm">📜 Lịch sử thay đổi số lượng</h3>
@@ -263,6 +301,7 @@
                         <table class="w-full text-left border-collapse text-xs">
                             <thead>
                                 <tr class="bg-slate-50 text-slate-700 uppercase border-b">
+                                    <th class="p-2.5">Ảnh</th>
                                     <th class="p-2.5">Tên vật tư</th>
                                     <th class="p-2.5 text-center">Tồn đầu kỳ</th>
                                     <th class="p-2.5 text-center">Dự tính</th>
@@ -305,7 +344,7 @@
         </main>
     </div>
 
-    <!-- MODAL: KHAI BÁO VẬT TƯ -->
+    <!-- MODAL: KHAI BÁO VẬT TƯ (CÓ TẢI ẢNH) -->
     <div id="catalog-modal" class="modal-bg">
         <div class="modal">
             <h3 class="mb-4 text-slate-900 font-bold border-b pb-2 text-base">Khai báo Vật tư</h3>
@@ -324,6 +363,17 @@
                     <div><label class="block text-xs font-bold mb-1">Tồn Đầu Kỳ</label><input id="c-lastmonth" type="number" value="0" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
                     <div><label class="block text-xs font-bold mb-1 text-red-600">Dự tính/tháng</label><input id="c-expected" type="number" value="0" class="w-full border rounded-lg px-3 py-2 text-sm"></div>
                     <div><label class="block text-xs font-bold mb-1 text-emerald-600">Nhập kho lần đầu</label><input id="c-init-qty" type="number" value="0" class="w-full border border-emerald-300 bg-emerald-50 rounded-lg px-3 py-2 text-sm"></div>
+                </div>
+                <div class="pt-3 border-t">
+                    <label class="block text-xs font-bold mb-2">Ảnh vật tư</label>
+                    <div class="flex items-center gap-4">
+                        <img id="c-image-preview" src="" alt="Preview" class="img-preview bg-slate-50" style="display:none;">
+                        <div class="flex-1 space-y-2">
+                            <input type="file" id="c-image-file" accept="image/*" onchange="previewImage(this)" class="w-full text-sm">
+                            <input type="hidden" id="c-image-base64" value="">
+                            <button type="button" onclick="removeImage()" class="text-xs text-red-600 font-bold">Xóa ảnh</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-6 pt-3 border-t">
@@ -412,12 +462,7 @@
         appId: "1:95926494899:web:90ebc1a8d75037257702c6"
     };
     
-    try {
-        firebase.initializeApp(firebaseConfig);
-    } catch(e) {
-        console.error("Firebase init error:", e);
-    }
-    
+    try { firebase.initializeApp(firebaseConfig); } catch(e) { console.error("Firebase init error:", e); }
     const fbdb = firebase.database();
 
     // ========== BIẾN TOÀN CỤC ==========
@@ -444,9 +489,42 @@
     function showError(msg) { showToast('❌ ' + msg, 'error'); }
     function todayStr() { return new Date().toISOString().slice(0,10); }
     function nowISO() { return new Date().toISOString(); }
+    function getDaysInMonth(monthStr) {
+        const [y, m] = monthStr.split('-').map(Number);
+        return new Date(y, m, 0).getDate();
+    }
+
+    // ========== XỬ LÝ ẢNH ==========
+    function getBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = e => reject(e);
+        });
+    }
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('c-image-preview').src = e.target.result;
+                document.getElementById('c-image-preview').style.display = 'block';
+                document.getElementById('c-image-base64').value = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeImage() {
+        document.getElementById('c-image-preview').src = '';
+        document.getElementById('c-image-preview').style.display = 'none';
+        document.getElementById('c-image-base64').value = '';
+        document.getElementById('c-image-file').value = '';
+    }
 
     // ==========================================
-    // HỆ THỐNG ĐĂNG NHẬP — ĐÃ SỬA TRIỆT ĐỂ
+    // HỆ THỐNG ĐĂNG NHẬP
     // ==========================================
     async function doLogin() {
         const uInput = document.getElementById('login-user');
@@ -469,7 +547,6 @@
         btnLogin.innerText = "Đang kiểm tra...";
         
         try {
-            // Bước 1: Tải dữ liệu users từ Firebase
             const snap = await fbdb.ref('users').once('value');
             const usersVal = snap.val();
             usersData = [];
@@ -480,21 +557,16 @@
                 });
             }
             
-            // Bước 2: Tự động tạo tài khoản admin mặc định nếu CHƯA CÓ
             let adminUser = usersData.find(x => x.username === 'admin');
             if (!adminUser) {
                 await fbdb.ref('users/admin_default').set({
-                    username: 'admin',
-                    password: '123456',
-                    modelName: 'Kho Tổng',
-                    role: 'admin',
-                    createdAt: nowISO()
+                    username: 'admin', password: '123456', modelName: 'Kho Tổng',
+                    role: 'admin', createdAt: nowISO()
                 });
                 adminUser = { username: 'admin', password: '123456', modelName: 'Kho Tổng', role: 'admin' };
                 usersData.push(adminUser);
             }
             
-            // Bước 3: Kiểm tra đăng nhập
             let found = null;
             if (u === 'admin' && p === '123456') {
                 found = adminUser;
@@ -536,12 +608,8 @@
     function checkAuth() {
         const session = localStorage.getItem('kv_session');
         if (session) {
-            try {
-                currentUser = JSON.parse(session);
-            } catch(e) {
-                currentUser = null;
-                localStorage.removeItem('kv_session');
-            }
+            try { currentUser = JSON.parse(session); } 
+            catch(e) { currentUser = null; localStorage.removeItem('kv_session'); }
         }
         
         if (currentUser) {
@@ -550,8 +618,8 @@
             applyPermissions();
             initFirebaseListeners();
             document.getElementById('current-period').textContent = `📅 Kỳ: ${todayStr().slice(0,7)}`;
-            document.getElementById('con-date').value = todayStr();
             document.getElementById('period-month').value = todayStr().slice(0,7);
+            document.getElementById('con-month-select').value = todayStr().slice(0,7);
         } else {
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('app-screen').classList.add('hidden');
@@ -570,7 +638,6 @@
                 switchTab('consumption');
             }
         }
-        document.getElementById('con-model-display').textContent = `Kho hiện tại: ${currentUser.modelName}`;
     }
 
     // ==========================================
@@ -607,6 +674,7 @@
             consumptionsData = [];
             if (snap.val()) Object.keys(snap.val()).forEach(k => consumptionsData.push({id:k, ...snap.val()[k]}));
             renderConsumptionHistory();
+            renderConsumptionDetail();
         });
 
         fbdb.ref('transactions').orderByChild('createdAt').limitToLast(200).on('value', snap => {
@@ -689,10 +757,16 @@
         uniqueModels = Array.from(set);
         
         const d1 = document.getElementById('dist-target');
-        const d2 = document.getElementById('con-target');
-        if (d1) d1.innerHTML = uniqueModels.filter(m=>m!=='khoTong').map(m=>`<option value="${m}">${m}</option>`).join('');
-        if (d2) d2.innerHTML = uniqueModels.map(m=>`<option value="${m}">${m}</option>`).join('');
-        if (d2 && currentUser?.modelName) d2.value = currentUser.modelName;
+        const d2 = document.getElementById('con-model-select');
+        const modelOptions = uniqueModels.filter(m=>m!=='khoTong');
+        
+        if (d1) d1.innerHTML = modelOptions.map(m=>`<option value="${m}">${m}</option>`).join('');
+        if (d2) {
+            d2.innerHTML = modelOptions.map(m=>`<option value="${m}">${m}</option>`).join('');
+            if (currentUser?.modelName && currentUser.modelName !== 'Kho Tổng') {
+                d2.value = currentUser.modelName;
+            }
+        }
     }
 
     function updateDropdowns() {
@@ -720,23 +794,27 @@
         if (tab === 'inventory') renderInventory();
         if (tab === 'orders') renderOrderPicker();
         if (tab === 'distribution') renderDistribution();
-        if (tab === 'consumption') renderConsumptionList();
+        if (tab === 'consumption') {
+            renderConsumptionQuick();
+            renderConsumptionDetail();
+            renderConsumptionHistory();
+        }
     }
 
     function renderAll() {
         renderInventory();
         renderOrders();
         renderDistribution();
-        renderConsumptionList();
-        renderConsumptionHistory();
-        renderTransactions();
         renderCatalog();
         renderUsers();
         renderOrderPicker();
+        renderConsumptionQuick();
+        renderConsumptionDetail();
+        renderConsumptionHistory();
     }
 
     // ==========================================
-    // RENDER: TỒN KHO
+    // RENDER: TỒN KHO TỔNG
     // ==========================================
     function renderInventory() {
         const search = (document.getElementById('search-inv')?.value || '').toLowerCase();
@@ -754,6 +832,7 @@
 
         const thead = document.getElementById('inv-thead');
         let h = `
+            <th class="sticky-th p-2 bg-slate-50 border-b border-slate-200 text-center">Ảnh</th>
             <th class="sticky-th p-2 bg-slate-50 border-b border-slate-200">Tên vật tư</th>
             <th class="sticky-th p-2 bg-slate-50 border-b border-slate-200 text-center">Mã</th>
             <th class="sticky-th p-2 bg-slate-50 border-b border-slate-200 text-center">ĐVT</th>
@@ -772,7 +851,7 @@
         document.getElementById('inv-count').textContent = `${data.length} mục`;
         
         if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${8 + uniqueModels.length}" class="p-6 text-center text-slate-400">Không có dữ liệu</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="${9 + uniqueModels.length}" class="p-6 text-center text-slate-400">Không có dữ liệu</td></tr>`;
             return;
         }
 
@@ -782,6 +861,7 @@
             const closing = kt.closing + lm;
             const expected = Number(i.expectedConsumption || 0);
             const isLow = expected > 0 && closing < expected;
+            const img = i.image ? `<img src="${i.image}" class="img-thumb mx-auto">` : `<div class="w-9 h-9 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs">📦</div>`;
             
             let modelCells = '';
             uniqueModels.filter(m=>m!=='khoTong').forEach(m => {
@@ -791,6 +871,7 @@
 
             return `
                 <tr class="${isLow?'low-stock':''} hover:bg-slate-50">
+                    <td class="p-2 text-center">${img}</td>
                     <td class="p-2 font-medium">${i.name}</td>
                     <td class="p-2 text-center text-xs text-slate-500">${i.code||'-'}</td>
                     <td class="p-2 text-center text-xs">${i.unit||'-'}</td>
@@ -818,12 +899,18 @@
             wrap.innerHTML = `<div class="col-span-full text-center text-slate-400 text-xs py-4">Không tìm thấy</div>`;
             return;
         }
-        wrap.innerHTML = data.map(i => `
-            <button onclick="openOrderModal('${i.id}')" class="border border-slate-200 rounded-lg p-2 text-left hover:border-amber-400 hover:bg-amber-50 transition-colors">
-                <div class="text-xs font-bold truncate">${i.name}</div>
-                <div class="text-[10px] text-slate-500 truncate">${i.code||'-'}</div>
-            </button>
-        `).join('');
+        wrap.innerHTML = data.map(i => {
+            const img = i.image ? `<img src="${i.image}" class="w-8 h-8 object-cover rounded">` : `<div class="w-8 h-8 bg-slate-100 rounded flex items-center justify-center text-xs">📦</div>`;
+            return `
+                <button onclick="openOrderModal('${i.id}')" class="border border-slate-200 rounded-lg p-2 text-left hover:border-amber-400 hover:bg-amber-50 transition-colors flex items-center gap-2">
+                    ${img}
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold truncate">${i.name}</div>
+                        <div class="text-[10px] text-slate-500 truncate">${i.code||'-'}</div>
+                    </div>
+                </button>
+            `;
+        }).join('');
     }
 
     function renderOrders() {
@@ -836,7 +923,6 @@
         tbody.innerHTML = ordersData.map(o => {
             const qty = Number(o.qty || 0);
             const rec = Number(o.actualQty || 0);
-            const remain = qty - rec;
             let status, btn;
             if (rec >= qty) {
                 status = `<span class="badge badge-success">Đã nhận đủ</span>`;
@@ -874,9 +960,10 @@
         }
         tbody.innerHTML = catalogData.map(i => {
             const avail = getTotalAvailable(i);
+            const img = i.image ? `<img src="${i.image}" class="img-thumb mx-auto">` : `<div class="w-9 h-9 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs">📦</div>`;
             return `
                 <tr class="border-b hover:bg-slate-50">
-                    <td class="p-2.5 text-center"><div class="w-9 h-9 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs font-bold text-slate-500">📦</div></td>
+                    <td class="p-2.5 text-center">${img}</td>
                     <td class="p-2.5"><strong class="text-sm">${i.name}</strong><br><span class="text-xs text-slate-500">Mã: ${i.code||'-'}</span></td>
                     <td class="p-2.5 text-center font-bold text-emerald-600 text-base bg-emerald-50">${avail}</td>
                     <td class="p-2.5 text-center"><input type="number" id="d-qty-${i.id}" min="1" max="${avail}" placeholder="SL" class="w-28 border rounded px-2 py-1.5 text-center text-sm" ${avail===0?'disabled':''}></td>
@@ -891,102 +978,226 @@
         const qty = Number(document.getElementById(`d-qty-${itemId}`).value);
         if (!target || !qty || qty <= 0) { showError('Chọn kho đích và nhập số lượng'); return; }
         
-        // Trừ kho tổng
         const r1 = await updateBalance(itemId, 'khoTong', -qty, 'distribute', `Phát cho ${target}`);
         if (!r1.ok) { showError(r1.error); return; }
         
-        // Cộng kho model
         const r2 = await updateBalance(itemId, target, qty, 'distribute', `Nhận từ Kho Tổng`);
         if (!r2.ok) { showError(r2.error); return; }
         
-        showToast(`Đã phát ${qty} đơn vị → ${target}`);
+        showToast(`✅ Đã phát ${qty} → ${target}`);
         document.getElementById(`d-qty-${itemId}`).value = '';
     }
 
     // ==========================================
-    // RENDER: TIÊU HAO
+    // RENDER: TIÊU HAO — DẠNG 3 DÒNG CHI TIẾT
     // ==========================================
-    function renderConsumptionList() {
-        const wrap = document.getElementById('consumption-list');
+    function renderConsumptionQuick() {
+        const wrap = document.getElementById('consumption-quick');
         if (!wrap) return;
         
         let activeModel;
-        if (currentUser.role === 'admin') {
-            activeModel = document.getElementById('con-target')?.value || currentUser.modelName;
+        const sel = document.getElementById('con-model-select');
+        if (currentUser.role === 'admin' && sel) {
+            activeModel = sel.value;
         } else {
             activeModel = currentUser.modelName;
         }
         
-        if (catalogData.length === 0) {
-            wrap.innerHTML = `<div class="col-span-full text-center text-slate-400 py-4">Chưa có vật tư</div>`;
+        if (!activeModel || catalogData.length === 0) {
+            wrap.innerHTML = `<div class="col-span-full text-center text-slate-400 py-4">Chọn Model để nhập tiêu hao</div>`;
             return;
         }
         
         wrap.innerHTML = catalogData.map(i => {
             const bal = getBalance(i.id, activeModel);
+            const img = i.image ? `<img src="${i.image}" class="w-10 h-10 object-cover rounded border">` : `<div class="w-10 h-10 bg-slate-100 rounded flex items-center justify-center">📦</div>`;
             return `
-                <div class="border border-slate-200 rounded-xl p-4 bg-white shadow-sm flex gap-4 hover:border-amber-400">
-                    <div class="w-14 h-14 bg-slate-100 rounded flex items-center justify-center text-2xl shrink-0">📦</div>
-                    <div class="flex-1 space-y-2 min-w-0">
-                        <h4 class="font-bold text-sm truncate">${i.name}</h4>
-                        <div class="flex justify-between text-xs">
-                            <span>Mã: <strong>${i.code||'-'}</strong></span>
-                            <span>Tồn: <strong class="${bal.closing===0?'text-red-500':'text-amber-600'}">${bal.closing}</strong></span>
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="number" id="c-qty-${i.id}" min="1" max="${bal.closing}" placeholder="SL trừ" class="w-20 border rounded px-2 py-1 text-sm" ${bal.closing===0?'disabled':''}>
-                            <button onclick="submitConsumption('${i.id}')" class="flex-1 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded" ${bal.closing===0?'disabled':''}>Trừ tiêu hao</button>
-                        </div>
+                <div class="border border-slate-200 rounded-lg p-3 bg-white flex gap-3 items-center hover:border-amber-400">
+                    ${img}
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-sm truncate">${i.name}</div>
+                        <div class="text-xs text-slate-500">Tồn: <strong class="${bal.closing===0?'text-red-500':'text-amber-600'}">${bal.closing}</strong></div>
+                    </div>
+                    <div class="flex gap-1">
+                        <input type="number" id="cq-${i.id}" min="1" max="${bal.closing}" placeholder="SL" class="w-16 border rounded px-2 py-1 text-center text-sm" ${bal.closing===0?'disabled':''}>
+                        <button onclick="quickConsume('${i.id}')" class="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded" ${bal.closing===0?'disabled':''}>Trừ</button>
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    async function submitConsumption(itemId) {
+    async function quickConsume(itemId) {
         let activeModel;
-        if (currentUser.role === 'admin') {
-            activeModel = document.getElementById('con-target')?.value;
+        const sel = document.getElementById('con-model-select');
+        if (currentUser.role === 'admin' && sel) {
+            activeModel = sel.value;
         } else {
             activeModel = currentUser.modelName;
         }
-        const qty = Number(document.getElementById(`c-qty-${itemId}`).value);
-        const date = document.getElementById('con-date').value;
         
-        if (!qty || !date) { showError('Nhập đủ số lượng và ngày'); return; }
-        
-        const r = await updateBalance(itemId, activeModel, -qty, 'consume', `Tiêu hao ngày ${date}`);
-        if (!r.ok) { showError(r.error); return; }
+        const qty = Number(document.getElementById(`cq-${itemId}`).value);
+        if (!qty || qty <= 0) { showError('Nhập số lượng'); return; }
         
         const item = catalogData.find(i => i.id === itemId);
+        const r = await updateBalance(itemId, activeModel, -qty, 'consume', `Tiêu hao ngày ${todayStr()}`);
+        if (!r.ok) { showError(r.error); return; }
+        
         await fbdb.ref('consumptions').push({
-            date, modelCode: activeModel, modelName: item.name,
-            qty, username: currentUser.username, itemCode: item.code || ''
+            date: todayStr(),
+            modelCode: activeModel,
+            modelName: item.name,
+            itemId: itemId,
+            qty: qty,
+            username: currentUser.username,
+            itemCode: item.code || ''
         });
         
-        showToast(`Đã trừ ${qty} ${item.name}`);
-        document.getElementById(`c-qty-${itemId}`).value = '';
+        showToast(`✅ Đã trừ ${qty} ${item.name}`);
+        document.getElementById(`cq-${itemId}`).value = '';
+    }
+
+    function renderConsumptionDetail() {
+        const modelSel = document.getElementById('con-model-select');
+        const monthSel = document.getElementById('con-month-select');
+        const tbody = document.getElementById('consumption-tbody');
+        const thead = document.getElementById('con-thead');
+        
+        if (!modelSel || !tbody || !thead) return;
+        
+        const activeModel = modelSel.value;
+        const monthStr = monthSel?.value || todayStr().slice(0,7);
+        const daysInMonth = getDaysInMonth(monthStr);
+        
+        document.getElementById('con-model-name').textContent = activeModel || '--';
+        
+        if (!activeModel || catalogData.length === 0) {
+            tbody.innerHTML = `<tr><td class="p-6 text-center text-slate-400">Chọn Model để xem chi tiết</td></tr>`;
+            thead.innerHTML = '';
+            return;
+        }
+        
+        // Tạo header: Cột cố định + các ngày trong tháng + Tổng + Tồn
+        let h = `
+            <th class="sticky-th sticky-col p-2 bg-slate-50 border-b border-slate-200 text-center" style="min-width:50px;">Ảnh</th>
+            <th class="sticky-th sticky-col p-2 bg-slate-50 border-b border-slate-200" style="min-width:150px; left:50px;">Vật tư</th>
+            <th class="sticky-th p-2 bg-slate-50 border-b border-slate-200 text-center" style="min-width:60px;">Dòng</th>
+        `;
+        for (let d = 1; d <= daysInMonth; d++) {
+            h += `<th class="sticky-th p-1 bg-slate-50 border-b border-slate-200 day-cell">${d}</th>`;
+        }
+        h += `
+            <th class="sticky-th p-2 bg-orange-100 border-b border-slate-200 text-center font-bold" style="min-width:60px;">Tổng SD</th>
+            <th class="sticky-th p-2 bg-emerald-100 border-b border-slate-200 text-center font-bold" style="min-width:70px;">Tồn TT</th>
+        `;
+        thead.innerHTML = h;
+        
+        // Lọc tiêu hao theo model và tháng
+        const modelConsumptions = consumptionsData.filter(c => 
+            c.modelCode === activeModel && c.date && c.date.startsWith(monthStr)
+        );
+        
+        // Nhóm theo itemId và ngày
+        const consMap = {}; // consMap[itemId][day] = totalQty
+        modelConsumptions.forEach(c => {
+            if (!consMap[c.itemId]) consMap[c.itemId] = {};
+            const day = Number(c.date.slice(8,10));
+            consMap[c.itemId][day] = (consMap[c.itemId][day] || 0) + Number(c.qty || 0);
+        });
+        
+        // Tính tổng nhận từ giao dịch distribute
+        const distMap = {};
+        transactionsData.filter(t => 
+            t.type === 'distribute' && t.modelName === activeModel && t.changeQty > 0
+        ).forEach(t => {
+            if (!distMap[t.itemId]) distMap[t.itemId] = 0;
+            distMap[t.itemId] += t.changeQty;
+        });
+        
+        let html = '';
+        let count = 0;
+        
+        catalogData.forEach(item => {
+            const bal = getBalance(item.id, activeModel);
+            const consByDay = consMap[item.id] || {};
+            const totalReceived = distMap[item.id] || 0;
+            const totalUsed = bal.used;
+            const closing = bal.closing;
+            
+            // Chỉ hiển thị vật tư có phát hoặc có tiêu hao hoặc còn tồn
+            if (totalReceived === 0 && totalUsed === 0 && closing === 0) return;
+            count++;
+            
+            const img = item.image ? `<img src="${item.image}" class="img-thumb mx-auto">` : `<div class="w-8 h-8 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs">📦</div>`;
+            
+            // Dòng 1: Nhận về
+            html += `<tr class="row-receive">
+                <td class="sticky-col p-2 text-center bg-emerald-50 border-r border-slate-200" rowspan="3">${img}</td>
+                <td class="sticky-col p-2 font-medium text-sm bg-emerald-50 border-r border-slate-200" style="left:50px;" rowspan="3">${item.name}<br><span class="text-xs text-slate-500">${item.code||'-'}</span></td>
+                <td class="p-1.5 text-center"><span class="badge badge-success">Nhận về</span></td>
+            `;
+            for (let d = 1; d <= daysInMonth; d++) {
+                html += `<td class="day-cell p-1 text-emerald-700 font-medium"></td>`;
+            }
+            html += `<td class="p-1.5 text-center font-bold text-emerald-700 bg-emerald-50">+${totalReceived}</td>
+                <td class="p-1.5 text-center bg-emerald-50"></td>
+            </tr>`;
+            
+            // Dòng 2: Sử dụng theo ngày
+            html += `<tr class="row-use">
+                <td class="p-1.5 text-center"><span class="badge badge-danger">Sử dụng</span></td>
+            `;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const val = consByDay[d] || 0;
+                html += `<td class="day-cell p-1 ${val > 0 ? 'has-value' : ''}">${val > 0 ? '-' + val : ''}</td>`;
+            }
+            html += `<td class="p-1.5 text-center font-bold text-red-600 bg-orange-50">-${totalUsed}</td>
+                <td class="p-1.5 text-center bg-orange-50"></td>
+            </tr>`;
+            
+            // Dòng 3: Tồn thực tế
+            html += `<tr class="row-closing">
+                <td class="p-1.5 text-center"><span class="badge badge-info">Tồn TT</span></td>
+            `;
+            for (let d = 1; d <= daysInMonth; d++) {
+                html += `<td class="day-cell p-1"></td>`;
+            }
+            html += `<td class="p-1.5 text-center bg-blue-50"></td>
+                <td class="p-1.5 text-center font-bold text-blue-700 text-base bg-blue-100">${closing}</td>
+            </tr>`;
+        });
+        
+        document.getElementById('con-item-count').textContent = `${count} vật tư`;
+        
+        if (count === 0) {
+            tbody.innerHTML = `<tr><td colspan="${3 + daysInMonth + 2}" class="p-6 text-center text-slate-400">Model này chưa có phát hàng hoặc tiêu hao nào</td></tr>`;
+        } else {
+            tbody.innerHTML = html;
+        }
     }
 
     function renderConsumptionHistory() {
-        const tbody = document.getElementById('consumption-tbody');
+        const tbody = document.getElementById('consumption-history-tbody');
         if (!tbody) return;
+        
         let data = [...consumptionsData];
         if (currentUser.role === 'user') {
             data = data.filter(c => c.modelCode === currentUser.modelName);
         }
         data.sort((a,b) => new Date(b.date) - new Date(a.date));
+        
         if (data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Chưa có dữ liệu tiêu hao</td></tr>`;
             return;
         }
-        tbody.innerHTML = data.slice(0, 50).map(c => `
-            <tr class="border-b">
+        
+        tbody.innerHTML = data.slice(0, 30).map(c => `
+            <tr class="border-b hover:bg-slate-50">
                 <td class="p-3 text-xs">${c.date}</td>
-                <td class="p-3 font-bold">${c.modelCode}</td>
+                <td class="p-3 font-bold text-amber-600">${c.modelCode}</td>
                 <td class="p-3 font-medium">${c.modelName}</td>
                 <td class="p-3 text-center font-bold text-red-600">-${c.qty}</td>
-                <td class="p-3 text-xs">${c.username}</td>
+                <td class="p-3 text-xs text-slate-500">${c.username}</td>
             </tr>
         `).join('');
     }
@@ -1016,8 +1227,7 @@
             receive: { text: 'Nhận hàng', cls: 'badge-success' },
             distribute: { text: 'Phát kho', cls: 'badge-warning' },
             consume: { text: 'Tiêu hao', cls: 'badge-danger' },
-            'period-close': { text: 'Đóng kỳ', cls: 'badge-info' },
-            adjust: { text: 'Điều chỉnh', cls: 'badge-info' }
+            'period-close': { text: 'Đóng kỳ', cls: 'badge-info' }
         };
         
         tbody.innerHTML = data.slice(0, 100).map(t => {
@@ -1045,20 +1255,24 @@
         const tbody = document.getElementById('catalog-tbody');
         if (!tbody) return;
         if (catalogData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Chưa có vật tư</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Chưa có vật tư</td></tr>`;
             return;
         }
-        tbody.innerHTML = catalogData.map(i => `
-            <tr class="border-b">
-                <td class="p-2.5 font-bold">${i.name}</td>
-                <td class="p-2.5 text-center">${i.lastMonthQty||0}</td>
-                <td class="p-2.5 text-center text-red-600 font-bold">${i.expectedConsumption||0}</td>
-                <td class="p-2.5 text-center">
-                    <button onclick="editCatalog('${i.id}')" class="text-blue-600 mr-2 text-xs font-bold">Sửa</button>
-                    <button onclick="deleteCatalog('${i.id}')" class="text-red-600 text-xs font-bold">Xóa</button>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = catalogData.map(i => {
+            const img = i.image ? `<img src="${i.image}" class="img-thumb mx-auto">` : `<div class="w-8 h-8 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs">📦</div>`;
+            return `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="p-2.5 text-center">${img}</td>
+                    <td class="p-2.5 font-bold">${i.name}</td>
+                    <td class="p-2.5 text-center">${i.lastMonthQty||0}</td>
+                    <td class="p-2.5 text-center text-red-600 font-bold">${i.expectedConsumption||0}</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="editCatalog('${i.id}')" class="text-blue-600 mr-2 text-xs font-bold">Sửa</button>
+                        <button onclick="deleteCatalog('${i.id}')" class="text-red-600 text-xs font-bold">Xóa</button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     function renderUsers() {
@@ -1066,11 +1280,11 @@
         if (!tbody) return;
         const displayUsers = usersData.filter(u => u.username !== 'admin');
         if (displayUsers.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-400">Chưa có user nào (ngoại trừ admin)</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-slate-400">Chưa có user nào</td></tr>`;
             return;
         }
         tbody.innerHTML = displayUsers.map(u => `
-            <tr class="border-b">
+            <tr class="border-b hover:bg-slate-50">
                 <td class="p-2.5 font-bold">${u.username}</td>
                 <td class="p-2.5 font-bold text-amber-600">${u.modelName}</td>
                 <td class="p-2.5 text-center">
@@ -1082,7 +1296,7 @@
     }
 
     // ==========================================
-    // MODAL: VẬT TƯ
+    // MODAL: VẬT TƯ (CÓ ẢNH)
     // ==========================================
     function openCatalogModal(item = null) {
         document.getElementById('cat-edit-id').value = item?.id || '';
@@ -1094,8 +1308,23 @@
         document.getElementById('c-lastmonth').value = item?.lastMonthQty || 0;
         document.getElementById('c-expected').value = item?.expectedConsumption || 0;
         document.getElementById('c-init-qty').value = item ? getBalance(item.id, 'khoTong').received : 0;
+        
+        // Xử lý ảnh
+        const preview = document.getElementById('c-image-preview');
+        if (item?.image) {
+            preview.src = item.image;
+            preview.style.display = 'block';
+            document.getElementById('c-image-base64').value = item.image;
+        } else {
+            preview.src = '';
+            preview.style.display = 'none';
+            document.getElementById('c-image-base64').value = '';
+        }
+        document.getElementById('c-image-file').value = '';
+        
         document.getElementById('catalog-modal').style.display = 'flex';
     }
+    
     function closeCatalogModal() { document.getElementById('catalog-modal').style.display = 'none'; }
     
     async function saveCatalog() {
@@ -1110,13 +1339,14 @@
             unit: document.getElementById('c-unit').value.trim(),
             supplier: document.getElementById('c-supplier').value.trim(),
             lastMonthQty: Number(document.getElementById('c-lastmonth').value) || 0,
-            expectedConsumption: Number(document.getElementById('c-expected').value) || 0
+            expectedConsumption: Number(document.getElementById('c-expected').value) || 0,
+            image: document.getElementById('c-image-base64').value || ''
         };
         
         try {
             if (id) {
                 await fbdb.ref(`catalog/${id}`).update(data);
-                showToast('Đã cập nhật vật tư');
+                showToast('✅ Đã cập nhật vật tư');
             } else {
                 const ref = await fbdb.ref('catalog').push(data);
                 const initQty = Number(document.getElementById('c-init-qty').value) || 0;
@@ -1130,7 +1360,7 @@
                         note: 'Nhập kho ban đầu', username: currentUser.username, createdAt: nowISO()
                     });
                 }
-                showToast('Đã tạo vật tư mới');
+                showToast('✅ Đã tạo vật tư mới');
             }
             closeCatalogModal();
         } catch(e) {
@@ -1183,7 +1413,7 @@
                 }
                 await fbdb.ref('users').push(data);
             }
-            showToast('Đã lưu user');
+            showToast('✅ Đã lưu user');
             closeUserModal();
         } catch(e) {
             showError(e.message);
@@ -1251,15 +1481,10 @@
         
         try {
             if (!catalogId) {
-                // Tạo vật tư mới
                 const newCat = {
-                    category: orderData.category,
-                    name,
-                    code: orderData.code,
-                    unit: orderData.unit,
-                    supplier: orderData.supplier,
-                    lastMonthQty: 0,
-                    expectedConsumption: 0
+                    category: orderData.category, name, code: orderData.code,
+                    unit: orderData.unit, supplier: orderData.supplier,
+                    lastMonthQty: 0, expectedConsumption: 0, image: ''
                 };
                 const ref = await fbdb.ref('catalog').push(newCat);
                 orderData.catalogId = ref.key;
@@ -1268,7 +1493,7 @@
             }
             
             await fbdb.ref('orders').push(orderData);
-            showToast('Đã tạo đơn hàng');
+            showToast('✅ Đã tạo đơn hàng');
             closeOrderModal();
         } catch(e) {
             showError(e.message);
@@ -1311,30 +1536,28 @@
         const remain = Number(order.qty || 0) - Number(order.actualQty || 0);
         if (qty > remain) { showError(`Số lượng vượt quá còn lại (${remain})`); return; }
         
-        // Cộng kho tổng
         const r = await updateBalance(catId, 'khoTong', qty, 'receive', note || `Nhận hàng đơn ${order.month}`);
         if (!r.ok) { showError(r.error); return; }
         
-        // Cập nhật đơn hàng
         const newActual = Number(order.actualQty || 0) + qty;
         const updates = { actualQty: newActual };
         if (newActual >= Number(order.qty)) updates.status = 'completed';
         else updates.status = 'partial';
         
         await fbdb.ref(`orders/${activeOrderId}`).update(updates);
-        showToast(`Đã nhận ${qty} đơn vị`);
+        showToast(`✅ Đã nhận ${qty} đơn vị`);
         closeReceiveModal();
     }
 
     // ==========================================
-    // ĐÓNG KỲ CUỐI THÁNG
+    // ĐÓNG KỲ
     // ==========================================
     async function executeClosePeriod() {
         const month = document.getElementById('period-month').value;
         const note = document.getElementById('period-note').value || `Đóng kỳ ${month}`;
         
         if (!month) { showError('Chọn kỳ cần đóng'); return; }
-        if (!confirm(`Xác nhận đóng kỳ ${month}? Hành động này không thể hoàn tác.`)) return;
+        if (!confirm(`Xác nhận đóng kỳ ${month}?`)) return;
         
         try {
             const updates = {};
@@ -1345,7 +1568,6 @@
                 const newLastMonth = kt.closing + Number(item.lastMonthQty || 0);
                 updates[`catalog/${item.id}/lastMonthQty`] = newLastMonth;
                 
-                // Reset balances về 0
                 const models = new Set(['khoTong']);
                 Object.keys(balancesData[item.id] || {}).forEach(m => models.add(m));
                 
@@ -1355,7 +1577,6 @@
                     updates[`balances/${item.id}/${m}/updatedAt`] = now;
                 }
                 
-                // Ghi lịch sử
                 const tid = `period_${Date.now()}_${item.id}`;
                 updates[`transactions/${tid}`] = {
                     itemId: item.id, itemName: item.name, itemCode: item.code || '',
@@ -1400,14 +1621,13 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Ton_kho');
         XLSX.writeFile(wb, `KHOVATTU_${todayStr()}.xlsx`);
-        showToast('Đã xuất Excel');
+        showToast('✅ Đã xuất Excel');
     }
 
     // ==========================================
-    // KHỞI CHẠY KHI TRANG TẢI XONG
+    // KHỞI CHẠY
     // ==========================================
     document.addEventListener('DOMContentLoaded', function() {
-        // Cho phép nhấn Enter để đăng nhập
         document.getElementById('login-pass').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') doLogin();
         });
@@ -1415,7 +1635,15 @@
             if (e.key === 'Enter') document.getElementById('login-pass').focus();
         });
         
-        // Kiểm tra phiên đăng nhập
+        // Khi đổi model ở tab tiêu hao thì cập nhật form nhập nhanh
+        const modelSel = document.getElementById('con-model-select');
+        if (modelSel) {
+            modelSel.addEventListener('change', function() {
+                renderConsumptionQuick();
+                renderConsumptionDetail();
+            });
+        }
+        
         checkAuth();
     });
 
