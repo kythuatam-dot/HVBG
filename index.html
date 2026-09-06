@@ -29,13 +29,25 @@
         .badge-warning { background: #fef3c7; color: #92400e; }
         .badge-danger { background: #fee2e2; color: #b91c1c; }
         .badge-success { background: #d1fae5; color: #065f46; }
-        .row-receive { background-color: #ecfdf5; }
-        .row-use { background-color: #fff7ed; }
-        .row-closing { background-color: #eff6ff; border-bottom: 3px solid #cbd5e1; }
-        .day-cell { min-width: 40px; text-align: center; font-size: 11px; }
-        .day-cell.has-value { background-color: #fee2e2; color: #b91c1c; font-weight: bold; }
+        
+        /* ===== DÒNG KẺ CHO BẢNG TIÊU HAO ===== */
+        .row-receive { background-color: #ecfdf5; border-bottom: 1px dashed #a7f3d0; }
+        .row-use { background-color: #fff7ed; border-bottom: 1px dashed #fed7aa; }
+        .row-closing { background-color: #eff6ff; border-bottom: 3px solid #475569; } /* Đường kẻ đậm phân cách vật tư */
+        .row-receive td, .row-use td, .row-closing td { border-right: 1px solid #e2e8f0; }
+        
+        .day-cell { min-width: 40px; text-align: center; font-size: 11px; border-right: 1px solid #f1f5f9; }
+        .day-cell.receive-val { background-color: #d1fae5; color: #065f46; font-weight: bold; }
+        .day-cell.use-val { background-color: #fee2e2; color: #b91c1c; font-weight: bold; }
+        .day-cell.closing-val { background-color: #dbeafe; color: #1e40af; font-weight: bold; }
+        
         .img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; }
         .img-thumb { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0; }
+        
+        /* Cột cố định */
+        .col-img { position: sticky; left: 0; z-index: 11; min-width: 50px; }
+        .col-name { position: sticky; left: 50px; z-index: 11; min-width: 150px; }
+        .col-type { position: sticky; left: 200px; z-index: 11; min-width: 80px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -178,20 +190,20 @@
                 </div>
             </div>
 
-            <!-- TAB 4: TIÊU HAO — DẠNG 3 DÒNG CHI TIẾT TỪNG MODEL -->
+            <!-- TAB 4: TIÊU HAO — DẠNG 3 DÒNG THEO NGÀY -->
             <div id="section-consumption" class="space-y-4 hidden">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 justify-between items-center border-l-4 border-l-amber-500">
                     <div>
                         <h3 class="font-bold text-slate-800 text-base">📊 Tiêu hao chi tiết theo Model</h3>
-                        <p class="text-xs text-slate-500 mt-1">Dạng 3 dòng: Nhận về → Sử dụng theo ngày → Tồn thực tế</p>
+                        <p class="text-xs text-slate-500 mt-1">Dạng 3 dòng: <span class="text-emerald-600 font-bold">Nhận về</span> → <span class="text-orange-600 font-bold">Sử dụng</span> → <span class="text-blue-600 font-bold">Tồn thực tế</span> theo từng ngày</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-bold text-slate-600">Chọn Model/Kho:</label>
-                        <select id="con-model-select" onchange="renderConsumptionDetail()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-amber-600 bg-amber-50 focus:outline-none"></select>
+                        <select id="con-model-select" onchange="renderConsumptionAll()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-amber-600 bg-amber-50 focus:outline-none"></select>
                     </div>
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-bold text-slate-600">Tháng:</label>
-                        <input id="con-month-select" type="month" onchange="renderConsumptionDetail()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
+                        <input id="con-month-select" type="month" onchange="renderConsumptionAll()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm">
                     </div>
                 </div>
 
@@ -201,20 +213,24 @@
                     <div id="consumption-quick" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
                 </div>
 
-                <!-- Bảng chi tiết 3 dòng -->
+                <!-- Bảng chi tiết 3 dòng theo ngày -->
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                         <h3 class="font-bold text-slate-800 text-sm">
-                            Bảng chi tiết tiêu hao — <span id="con-model-name" class="text-amber-600">--</span>
+                            Bảng chi tiết — <span id="con-model-name" class="text-amber-600">--</span>
                         </h3>
-                        <span class="text-xs text-slate-500" id="con-item-count">0 vật tư</span>
+                        <div class="flex gap-4 text-xs">
+                            <span><span class="inline-block w-3 h-3 bg-emerald-100 border mr-1"></span>Nhận về</span>
+                            <span><span class="inline-block w-3 h-3 bg-orange-100 border mr-1"></span>Sử dụng</span>
+                            <span><span class="inline-block w-3 h-3 bg-blue-100 border mr-1"></span>Tồn TT</span>
+                        </div>
                     </div>
                     <div class="overflow-x-auto table-container">
-                        <table class="w-full text-left border-collapse text-sm">
+                        <table class="w-full text-left border-collapse text-sm" style="min-width: 1400px;">
                             <thead>
-                                <tr id="con-thead" class="bg-slate-50 text-slate-700 uppercase text-xs border-b border-slate-200"></tr>
+                                <tr id="con-thead" class="bg-slate-100 text-slate-700 uppercase text-xs border-b-2 border-slate-400"></tr>
                             </thead>
-                            <tbody id="consumption-tbody" class="divide-y divide-slate-100">
+                            <tbody id="consumption-tbody" class="divide-y divide-slate-300">
                                 <tr><td class="p-6 text-center text-slate-400">Chọn Model để xem chi tiết</td></tr>
                             </tbody>
                         </table>
@@ -677,11 +693,12 @@
             renderConsumptionDetail();
         });
 
-        fbdb.ref('transactions').orderByChild('createdAt').limitToLast(200).on('value', snap => {
+        fbdb.ref('transactions').orderByChild('createdAt').limitToLast(300).on('value', snap => {
             transactionsData = [];
             if (snap.val()) Object.keys(snap.val()).forEach(k => transactionsData.push({id:k, ...snap.val()[k]}));
             transactionsData.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
             renderTransactions();
+            renderConsumptionDetail();
         });
     }
 
@@ -794,11 +811,7 @@
         if (tab === 'inventory') renderInventory();
         if (tab === 'orders') renderOrderPicker();
         if (tab === 'distribution') renderDistribution();
-        if (tab === 'consumption') {
-            renderConsumptionQuick();
-            renderConsumptionDetail();
-            renderConsumptionHistory();
-        }
+        if (tab === 'consumption') renderConsumptionAll();
     }
 
     function renderAll() {
@@ -808,6 +821,9 @@
         renderCatalog();
         renderUsers();
         renderOrderPicker();
+    }
+
+    function renderConsumptionAll() {
         renderConsumptionQuick();
         renderConsumptionDetail();
         renderConsumptionHistory();
@@ -989,7 +1005,7 @@
     }
 
     // ==========================================
-    // RENDER: TIÊU HAO — DẠNG 3 DÒNG CHI TIẾT
+    // RENDER: TIÊU HAO NHANH
     // ==========================================
     function renderConsumptionQuick() {
         const wrap = document.getElementById('consumption-quick');
@@ -1057,6 +1073,9 @@
         document.getElementById(`cq-${itemId}`).value = '';
     }
 
+    // ==========================================
+    // RENDER: BẢNG TIÊU HAO CHI TIẾT 3 DÒNG THEO NGÀY
+    // ==========================================
     function renderConsumptionDetail() {
         const modelSel = document.getElementById('con-model-select');
         const monthSel = document.getElementById('con-month-select');
@@ -1068,6 +1087,7 @@
         const activeModel = modelSel.value;
         const monthStr = monthSel?.value || todayStr().slice(0,7);
         const daysInMonth = getDaysInMonth(monthStr);
+        const today = todayStr();
         
         document.getElementById('con-model-name').textContent = activeModel || '--';
         
@@ -1077,100 +1097,135 @@
             return;
         }
         
-        // Tạo header: Cột cố định + các ngày trong tháng + Tổng + Tồn
+        // ===== TẠO HEADER =====
         let h = `
-            <th class="sticky-th sticky-col p-2 bg-slate-50 border-b border-slate-200 text-center" style="min-width:50px;">Ảnh</th>
-            <th class="sticky-th sticky-col p-2 bg-slate-50 border-b border-slate-200" style="min-width:150px; left:50px;">Vật tư</th>
-            <th class="sticky-th p-2 bg-slate-50 border-b border-slate-200 text-center" style="min-width:60px;">Dòng</th>
+            <th class="sticky-th col-img p-2 bg-slate-100 border-b-2 border-slate-400 border-r border-slate-300 text-center">Ảnh</th>
+            <th class="sticky-th col-name p-2 bg-slate-100 border-b-2 border-slate-400 border-r border-slate-300">Vật tư</th>
+            <th class="sticky-th col-type p-2 bg-slate-100 border-b-2 border-slate-400 border-r border-slate-300 text-center">Dòng</th>
         `;
         for (let d = 1; d <= daysInMonth; d++) {
-            h += `<th class="sticky-th p-1 bg-slate-50 border-b border-slate-200 day-cell">${d}</th>`;
+            const isToday = today === `${monthStr}-${String(d).padStart(2,'0')}`;
+            h += `<th class="sticky-th p-1 bg-slate-100 border-b-2 border-slate-400 day-cell ${isToday?'bg-amber-100':''}">${d}</th>`;
         }
         h += `
-            <th class="sticky-th p-2 bg-orange-100 border-b border-slate-200 text-center font-bold" style="min-width:60px;">Tổng SD</th>
-            <th class="sticky-th p-2 bg-emerald-100 border-b border-slate-200 text-center font-bold" style="min-width:70px;">Tồn TT</th>
+            <th class="sticky-th p-2 bg-slate-100 border-b-2 border-slate-400 border-l-2 border-slate-400 text-center font-bold" style="min-width:70px;">Tổng</th>
         `;
         thead.innerHTML = h;
         
-        // Lọc tiêu hao theo model và tháng
-        const modelConsumptions = consumptionsData.filter(c => 
+        // ===== NHÓM DỮ LIỆU THEO NGÀY =====
+        // Tiêu hao: consumptionsData theo ngày
+        const consByItemDay = {};
+        consumptionsData.filter(c => 
             c.modelCode === activeModel && c.date && c.date.startsWith(monthStr)
-        );
-        
-        // Nhóm theo itemId và ngày
-        const consMap = {}; // consMap[itemId][day] = totalQty
-        modelConsumptions.forEach(c => {
-            if (!consMap[c.itemId]) consMap[c.itemId] = {};
+        ).forEach(c => {
+            if (!consByItemDay[c.itemId]) consByItemDay[c.itemId] = {};
             const day = Number(c.date.slice(8,10));
-            consMap[c.itemId][day] = (consMap[c.itemId][day] || 0) + Number(c.qty || 0);
+            consByItemDay[c.itemId][day] = (consByItemDay[c.itemId][day] || 0) + Number(c.qty || 0);
         });
         
-        // Tính tổng nhận từ giao dịch distribute
-        const distMap = {};
+        // Nhận về: từ transactions loại distribute, changeQty > 0, modelName = activeModel
+        const receiveByItemDay = {};
         transactionsData.filter(t => 
-            t.type === 'distribute' && t.modelName === activeModel && t.changeQty > 0
+            t.type === 'distribute' && t.modelName === activeModel && t.changeQty > 0 
+            && t.createdAt && t.createdAt.startsWith(monthStr)
         ).forEach(t => {
-            if (!distMap[t.itemId]) distMap[t.itemId] = 0;
-            distMap[t.itemId] += t.changeQty;
+            if (!receiveByItemDay[t.itemId]) receiveByItemDay[t.itemId] = {};
+            const day = Number(t.createdAt.slice(8,10));
+            receiveByItemDay[t.itemId][day] = (receiveByItemDay[t.itemId][day] || 0) + t.changeQty;
         });
         
+        // ===== RENDER TỪNG VẬT TƯ =====
         let html = '';
         let count = 0;
+        const todayDay = today.startsWith(monthStr) ? Number(today.slice(8,10)) : daysInMonth;
         
         catalogData.forEach(item => {
             const bal = getBalance(item.id, activeModel);
-            const consByDay = consMap[item.id] || {};
-            const totalReceived = distMap[item.id] || 0;
-            const totalUsed = bal.used;
-            const closing = bal.closing;
+            const consByDay = consByItemDay[item.id] || {};
+            const recByDay = receiveByItemDay[item.id] || {};
             
-            // Chỉ hiển thị vật tư có phát hoặc có tiêu hao hoặc còn tồn
-            if (totalReceived === 0 && totalUsed === 0 && closing === 0) return;
+            // Tính tổng nhận và tổng tiêu
+            const totalReceive = Object.values(recByDay).reduce((a,b)=>a+b, 0);
+            const totalUse = Object.values(consByDay).reduce((a,b)=>a+b, 0);
+            
+            // Chỉ hiển thị vật tư có phát hoặc có tiêu hoặc còn tồn
+            if (totalReceive === 0 && totalUse === 0 && bal.closing === 0) return;
             count++;
             
-            const img = item.image ? `<img src="${item.image}" class="img-thumb mx-auto">` : `<div class="w-8 h-8 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs">📦</div>`;
+            const img = item.image 
+                ? `<img src="${item.image}" class="img-thumb mx-auto" style="margin-top:12px;">` 
+                : `<div class="w-8 h-8 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs" style="margin-top:12px;">📦</div>`;
             
-            // Dòng 1: Nhận về
-            html += `<tr class="row-receive">
-                <td class="sticky-col p-2 text-center bg-emerald-50 border-r border-slate-200" rowspan="3">${img}</td>
-                <td class="sticky-col p-2 font-medium text-sm bg-emerald-50 border-r border-slate-200" style="left:50px;" rowspan="3">${item.name}<br><span class="text-xs text-slate-500">${item.code||'-'}</span></td>
-                <td class="p-1.5 text-center"><span class="badge badge-success">Nhận về</span></td>
-            `;
+            // ===== TÍNH TỒN THEO TỪNG NGÀY =====
+            // Tồn đầu kỳ = closing hiện tại - tổng nhận + tổng tiêu
+            const openingBalance = bal.closing - totalReceive + totalUse;
+            let runningBalance = openingBalance;
+            const closingByDay = {};
+            
             for (let d = 1; d <= daysInMonth; d++) {
-                html += `<td class="day-cell p-1 text-emerald-700 font-medium"></td>`;
+                const rec = recByDay[d] || 0;
+                const use = consByDay[d] || 0;
+                runningBalance = runningBalance + rec - use;
+                if (d <= todayDay) {
+                    closingByDay[d] = runningBalance;
+                }
             }
-            html += `<td class="p-1.5 text-center font-bold text-emerald-700 bg-emerald-50">+${totalReceived}</td>
-                <td class="p-1.5 text-center bg-emerald-50"></td>
-            </tr>`;
             
-            // Dòng 2: Sử dụng theo ngày
-            html += `<tr class="row-use">
-                <td class="p-1.5 text-center"><span class="badge badge-danger">Sử dụng</span></td>
+            // ===== DÒNG 1: NHẬN VỀ =====
+            html += `<tr class="row-receive">
+                <td class="col-img p-1 text-center bg-emerald-50 border-r border-slate-300" rowspan="3">${img}</td>
+                <td class="col-name p-2 font-medium text-sm bg-emerald-50 border-r border-slate-300" style="left:50px;" rowspan="3">
+                    ${item.name}<br><span class="text-xs text-slate-500">${item.code||'-'}</span>
+                </td>
+                <td class="col-type p-1.5 text-center bg-emerald-100 border-r border-slate-300 font-bold" style="left:200px;">
+                    <span class="badge badge-success">Nhận về</span>
+                </td>
             `;
+            let recTotal = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const val = recByDay[d] || 0;
+                recTotal += val;
+                html += `<td class="day-cell p-1 ${val > 0 ? 'receive-val' : ''}">${val > 0 ? '+' + val : ''}</td>`;
+            }
+            html += `<td class="p-1.5 text-center font-bold text-emerald-700 bg-emerald-100 border-l-2 border-slate-400">+${recTotal}</td></tr>`;
+            
+            // ===== DÒNG 2: SỬ DỤNG =====
+            html += `<tr class="row-use">
+                <td class="col-type p-1.5 text-center bg-orange-100 border-r border-slate-300 font-bold" style="left:200px;">
+                    <span class="badge badge-danger">Sử dụng</span>
+                </td>
+            `;
+            let useTotal = 0;
             for (let d = 1; d <= daysInMonth; d++) {
                 const val = consByDay[d] || 0;
-                html += `<td class="day-cell p-1 ${val > 0 ? 'has-value' : ''}">${val > 0 ? '-' + val : ''}</td>`;
+                useTotal += val;
+                html += `<td class="day-cell p-1 ${val > 0 ? 'use-val' : ''}">${val > 0 ? '-' + val : ''}</td>`;
             }
-            html += `<td class="p-1.5 text-center font-bold text-red-600 bg-orange-50">-${totalUsed}</td>
-                <td class="p-1.5 text-center bg-orange-50"></td>
-            </tr>`;
+            html += `<td class="p-1.5 text-center font-bold text-red-600 bg-orange-100 border-l-2 border-slate-400">-${useTotal}</td></tr>`;
             
-            // Dòng 3: Tồn thực tế
+            // ===== DÒNG 3: TỒN THỰC TẾ THEO NGÀY =====
             html += `<tr class="row-closing">
-                <td class="p-1.5 text-center"><span class="badge badge-info">Tồn TT</span></td>
+                <td class="col-type p-1.5 text-center bg-blue-100 border-r border-slate-300 font-bold" style="left:200px;">
+                    <span class="badge badge-info">Tồn TT</span>
+                </td>
             `;
             for (let d = 1; d <= daysInMonth; d++) {
-                html += `<td class="day-cell p-1"></td>`;
+                if (d in closingByDay) {
+                    const val = closingByDay[d];
+                    const isLow = val <= Number(item.expectedConsumption || 0) / 30;
+                    html += `<td class="day-cell p-1 closing-val ${val === 0 ? 'text-red-600' : ''} ${isLow && val > 0 ? 'bg-amber-100 text-amber-700' : ''}">${val}</td>`;
+                } else {
+                    html += `<td class="day-cell p-1 text-slate-300">•</td>`;
+                }
             }
-            html += `<td class="p-1.5 text-center bg-blue-50"></td>
-                <td class="p-1.5 text-center font-bold text-blue-700 text-base bg-blue-100">${closing}</td>
-            </tr>`;
+            html += `<td class="p-1.5 text-center font-bold text-blue-700 text-base bg-blue-200 border-l-2 border-slate-400">${bal.closing}</td></tr>`;
         });
         
-        document.getElementById('con-item-count').textContent = `${count} vật tư`;
+        document.getElementById('con-item-count')?.textContent !== undefined || 
+            (document.getElementById('con-model-name').textContent = `${activeModel} — ${count} vật tư`);
         
         if (count === 0) {
-            tbody.innerHTML = `<tr><td colspan="${3 + daysInMonth + 2}" class="p-6 text-center text-slate-400">Model này chưa có phát hàng hoặc tiêu hao nào</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="${3 + daysInMonth + 1}" class="p-6 text-center text-slate-400">Model này chưa có phát hàng hoặc tiêu hao nào</td></tr>`;
         } else {
             tbody.innerHTML = html;
         }
@@ -1296,7 +1351,7 @@
     }
 
     // ==========================================
-    // MODAL: VẬT TƯ (CÓ ẢNH)
+    // MODAL: VẬT TƯ
     // ==========================================
     function openCatalogModal(item = null) {
         document.getElementById('cat-edit-id').value = item?.id || '';
@@ -1309,7 +1364,6 @@
         document.getElementById('c-expected').value = item?.expectedConsumption || 0;
         document.getElementById('c-init-qty').value = item ? getBalance(item.id, 'khoTong').received : 0;
         
-        // Xử lý ảnh
         const preview = document.getElementById('c-image-preview');
         if (item?.image) {
             preview.src = item.image;
@@ -1321,7 +1375,6 @@
             document.getElementById('c-image-base64').value = '';
         }
         document.getElementById('c-image-file').value = '';
-        
         document.getElementById('catalog-modal').style.display = 'flex';
     }
     
@@ -1635,13 +1688,9 @@
             if (e.key === 'Enter') document.getElementById('login-pass').focus();
         });
         
-        // Khi đổi model ở tab tiêu hao thì cập nhật form nhập nhanh
         const modelSel = document.getElementById('con-model-select');
         if (modelSel) {
-            modelSel.addEventListener('change', function() {
-                renderConsumptionQuick();
-                renderConsumptionDetail();
-            });
+            modelSel.addEventListener('change', renderConsumptionAll);
         }
         
         checkAuth();
