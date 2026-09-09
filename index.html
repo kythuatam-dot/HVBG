@@ -550,8 +550,12 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             });
 
             // Tìm user khớp thông tin đăng nhập
+            // (so khớp không phân biệt hoa/thường với username, và bỏ khoảng trắng dư
+            // trong dữ liệu đã lưu, để các tài khoản tạo trước đó vẫn đăng nhập được)
             let found = usersData.find(x => 
-                (x.username === u && x.password === p)
+                x.username && x.password &&
+                String(x.username).trim().toLowerCase() === u.toLowerCase() &&
+                String(x.password).trim() === p
             );
 
             if (found) {
@@ -563,8 +567,11 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
                 localStorage.setItem('kv_session', JSON.stringify(currentUser));
                 
                 showToast('✅ Đăng nhập thành công!');
+                checkAuth();
             } else {
-                errDiv.innerText = "Tài khoản hoặc mật khẩu không đúng!\n→ Tài khoản mặc định: admin / 123456";
+                console.log('Đăng nhập thất bại. Danh sách tài khoản hiện có trong hệ thống (chỉ tên, không hiện mật khẩu):',
+                    usersData.map(x => x.username));
+                errDiv.innerText = "Tài khoản hoặc mật khẩu không đúng!";
                 errDiv.classList.remove('hidden');
             }
         } catch (e) {
@@ -582,7 +589,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         currentUser = null;
         if(document.getElementById('login-user')) document.getElementById('login-user').value = '';
         if(document.getElementById('login-pass')) document.getElementById('login-pass').value = '';
-        
+        checkAuth();
     }
 
     function checkAuth() {
@@ -1292,6 +1299,25 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             `;
         }).join('');
     }
+    // editUser/deleteUser bị gọi từ nút "Sửa"/"Xóa" trong bảng user nhưng trước đây
+    // chưa có hàm nào được định nghĩa cả -> bấm vào không có tác dụng gì, nên nếu
+    // admin từng "sửa" mật khẩu cho user thì thực ra KHÔNG hề được lưu lại.
+    function editUser(id) {
+        const user = usersData.find(u => u.id === id);
+        if (!user) { showError('Không tìm thấy user!'); return; }
+        openUserModal(user);
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('Xóa user này?')) return;
+        try {
+            await fbdb.ref('users/' + id).remove();
+            showToast('✅ Đã xóa user');
+        } catch(e) {
+            showError('Lỗi xóa: ' + e.message);
+        }
+    }
+
     function renderUsers() {
         const tbody = document.getElementById('users-tbody');
         if (!tbody) return;
