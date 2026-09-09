@@ -740,7 +740,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     // ==========================================
     function updateModels() {
         const set = new Set(['khoTong']);
-        usersData.forEach(u => { if(u.modelName) set.add(u.modelName); });
+        usersData.forEach(u => { if(u.modelName && u.role !== 'admin') set.add(u.modelName); });
         uniqueModels = Array.from(set);
         
         const d1 = document.getElementById('dist-target');
@@ -822,28 +822,40 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         uniqueModels.filter(m=>m!=='khoTong').forEach(m => {
             h += `<th class="sticky-th p-2 bg-slate-50 border-b border-slate-200 text-center whitespace-nowrap">${m}</th>`;
         });
+        h += `<th class="sticky-th p-2 bg-amber-50 border-b border-slate-200 text-center font-bold whitespace-nowrap">Kho Tổng</th>`;
+        h += `<th class="sticky-th p-2 bg-amber-100 border-b border-slate-200 text-center font-bold whitespace-nowrap">Total</th>`;
         h += `<th class="sticky-th p-2 bg-red-50 border-b border-slate-200 text-center">Dự tính</th>`;
         thead.innerHTML = h;
         const tbody = document.getElementById('inventory-tbody');
         document.getElementById('inv-count').textContent = `${data.length} mục`;
         
         if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${9 + uniqueModels.length}" class="p-6 text-center text-slate-400">Không có dữ liệu</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="${11 + uniqueModels.length}" class="p-6 text-center text-slate-400">Không có dữ liệu</td></tr>`;
             return;
         }
         tbody.innerHTML = data.map(i => {
             const kt = getBalance(i.id, 'khoTong');
             const lm = Number(i.lastMonthQty || 0);
-            const closing = kt.closing + lm;
-            const expected = Number(i.expectedConsumption || 0);
-            const isLow = expected > 0 && closing < expected;
-            const img = i.image ? `<img src="${i.image}" class="img-thumb mx-auto" loading="lazy">` : `<div class="w-9 h-9 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs">📦</div>`;
-            
+            const locationModels = uniqueModels.filter(m=>m!=='khoTong');
+            // Sử dụng thực tế = tổng tiêu hao tại tất cả các kho/vị trí (không tính
+            // phần chỉ mới được điều chuyển nội bộ từ Kho Tổng ra các kho, vì phần đó
+            // vẫn còn nằm trong công ty, chưa thực sự "mất đi")
+            let usedAtLocations = 0;
             let modelCells = '';
-            uniqueModels.filter(m=>m!=='khoTong').forEach(m => {
+            locationModels.forEach(m => {
                 const mb = getBalance(i.id, m);
+                usedAtLocations += mb.used;
                 modelCells += `<td class="p-2 text-center border-l border-slate-100 ${mb.closing===0?'text-slate-400':'font-medium'}">${mb.closing}</td>`;
             });
+            // Total = Tồn Đầu Kỳ + Nhận trong kỳ - Sử dụng ; Tồn Cuối Kỳ = Total
+            const total = lm + kt.received - usedAtLocations;
+            const closing = total;
+            // Kho Tổng = số hiện còn tại kho tổng, tức là chưa được điều chuyển đi kho nào
+            const khoTongRemaining = lm + kt.received - kt.used;
+            const expected = Number(i.expectedConsumption || 0);
+            const isLow = expected > 0 && total < expected;
+            const img = i.image ? `<img src="${i.image}" class="img-thumb mx-auto" loading="lazy">` : `<div class="w-9 h-9 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs">📦</div>`;
+            
             return `
                 <tr class="${isLow?'low-stock':''} hover:bg-slate-50">
                     <td class="p-2 text-center">${img}</td>
@@ -852,9 +864,11 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
                     <td class="p-2 text-center text-xs">${i.unit||'-'}</td>
                     <td class="p-2 text-center">${lm}</td>
                     <td class="p-2 text-center text-blue-600 font-medium">+${kt.received}</td>
-                    <td class="p-2 text-center text-orange-600 font-medium">-${kt.used}</td>
+                    <td class="p-2 text-center text-orange-600 font-medium">-${usedAtLocations}</td>
                     <td class="p-2 text-center font-bold text-sm">${closing}</td>
                     ${modelCells}
+                    <td class="p-2 text-center font-bold text-sm bg-amber-50">${khoTongRemaining}</td>
+                    <td class="p-2 text-center font-bold text-sm bg-amber-100">${total}</td>
                     <td class="p-2 text-center text-xs ${isLow?'text-red-600 font-bold':''}">${expected}</td>
                 </tr>
             `;
