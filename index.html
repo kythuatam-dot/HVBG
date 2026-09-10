@@ -15,7 +15,8 @@
 body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5f9; }
 .hidden { display: none !important; }
 .sticky-th { position: sticky; top: 0; z-index: 10; }
-.img-thumb { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; }
+.img-thumb { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: zoom-in; }
+.img-thumb:hover { transform: scale(4); transform-origin: left center; position: relative; z-index: 50; box-shadow: 0 12px 28px rgba(0,0,0,0.35); border-radius: 8px; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
 .badge-success { background: #dcfce7; color: #166534; }
 .badge-warning { background: #fef3c7; color: #92400e; }
@@ -118,6 +119,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
                 <input type="text" id="search-inv" placeholder="🔍 Tìm kiếm..." class="form-input flex-1 min-w-[200px]" oninput="renderInventory()">
                 <select id="filter-cat" class="form-input w-48" onchange="renderInventory()"></select>
                 <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" id="filter-low-stock" onchange="renderInventory()"><span>Chỉ xem sắp hết</span></label>
+                <button onclick="exportInventoryExcel()" class="btn btn-success text-xs">📥 Xuất Excel</button>
                 <span id="inv-count" class="text-sm text-slate-500 ml-auto"></span>
             </div>
             <div class="bg-white rounded-xl shadow-sm overflow-auto" style="max-height: 70vh;">
@@ -134,7 +136,10 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
                     <div id="order-picker" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto"></div>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm p-4">
-                    <h3 class="font-bold mb-3">📋 Danh sách đặt hàng</h3>
+                    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                        <h3 class="font-bold">📋 Danh sách đặt hàng</h3>
+                        <button onclick="exportOrdersExcel()" class="btn btn-success text-xs">📥 Xuất Excel</button>
+                    </div>
                     <div class="overflow-auto" style="max-height: 60vh;">
                         <table class="w-full text-sm">
                             <thead class="bg-slate-50"><tr><th class="p-3 text-left">Kỳ</th><th class="p-3 text-left">Vật tư</th><th class="p-3 text-center">SL</th><th class="p-3 text-left">Ngày dự kiến</th><th class="p-3 text-center">TT</th><th class="p-3 text-center">TH</th></tr></thead>
@@ -150,7 +155,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex flex-wrap items-center gap-3">
                 <input type="text" id="search-dist" placeholder="🔍 Tìm kiếm..." class="form-input flex-1 min-w-[200px]" oninput="renderDistribution()">
                 <label class="form-label m-0">Kho đích:</label>
-                <select id="dist-target" class="form-input w-64"></select>
+                <select id="dist-target" class="form-input w-64" onchange="renderDistribution()"></select>
                 <span id="dist-count" class="text-sm text-slate-500"></span>
             </div>
             <div class="bg-white rounded-xl shadow-sm overflow-auto" style="max-height: 70vh;">
@@ -181,7 +186,10 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
                 <table class="text-sm border-collapse" style="min-width:100%"><thead id="con-thead"></thead><tbody id="consumption-tbody"></tbody></table>
             </div>
             <div class="bg-white rounded-xl shadow-sm p-4 overflow-auto" style="max-height: 50vh;">
-                <h3 class="font-bold mb-3">📜 Lịch sử tiêu hao</h3>
+                <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                    <h3 class="font-bold">📜 Lịch sử tiêu hao</h3>
+                    <button onclick="exportConsumptionExcel()" class="btn btn-success text-xs">📥 Xuất Excel</button>
+                </div>
                 <table class="w-full text-sm">
                     <thead class="bg-slate-50"><tr><th class="p-3 text-left">Ngày</th><th class="p-3 text-left">Model</th><th class="p-3 text-left">Vật tư</th><th class="p-3 text-center">SL</th><th class="p-3 text-left">Người nhập</th></tr></thead>
                     <tbody id="consumption-history-tbody"></tbody>
@@ -194,7 +202,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex gap-3 items-center">
                 <input type="text" id="trans-search" placeholder="Tìm kiếm..." class="form-input flex-1" oninput="renderTransactions()">
                 <select id="trans-filter" class="form-input w-40" onchange="renderTransactions()">
-                    <option value="">Tất cả loại</option><option value="receive">Nhận hàng</option><option value="distribute">Phát kho</option><option value="consume">Tiêu hao</option>
+                    <option value="">Tất cả loại</option><option value="receive">Nhận hàng</option><option value="distribute">Phát kho</option><option value="consume">Tiêu hao</option><option value="adjust">Điều chỉnh</option>
                 </select>
             </div>
             <div class="bg-white rounded-xl shadow-sm overflow-auto" style="max-height: 70vh;">
@@ -315,6 +323,10 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
                 <div><label class="form-label">Tồn đầu kỳ</label><input type="number" id="c-lastMonthQty" class="form-input" value="0"></div>
                 <div><label class="form-label">Dự tính tiêu hao</label><input type="number" id="c-expectedConsumption" class="form-input" value="0"></div>
             </div>
+            <div>
+                <label class="form-label">Kho sử dụng (để trống = dùng chung tất cả các kho)</label>
+                <div id="c-khos-list" class="grid grid-cols-2 gap-1.5 p-2 border border-slate-200 rounded-lg max-h-32 overflow-y-auto"></div>
+            </div>
             <div><label class="form-label">Ảnh vật tư</label>
                 <div class="flex items-start gap-4">
                     <img id="c-image-preview" class="w-24 h-24 object-cover rounded-lg border" style="display:none">
@@ -397,6 +409,33 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         <div class="modal-footer">
             <button onclick="closeModal('modal-receive')" class="btn btn-outline">Hủy</button>
             <button onclick="submitReceive()" class="btn btn-success">Xác nhận nhận</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ĐIỀU CHỈNH TỒN KHO (ADMIN) -->
+<div id="modal-adjust-stock" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:420px">
+        <div class="modal-header">
+            <h3 class="font-bold text-lg">Điều chỉnh tồn kho</h3>
+            <button onclick="closeModal('modal-adjust-stock')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="adj-itemId">
+            <input type="hidden" id="adj-model">
+            <div class="mb-3 p-3 bg-slate-50 rounded-lg">
+                <div id="adj-itemName" class="font-bold"></div>
+                <div id="adj-modelLabel" class="text-xs text-slate-500"></div>
+            </div>
+            <label class="form-label">Tồn hiện tại (theo hệ thống)</label>
+            <div id="adj-current" class="font-bold text-lg text-slate-600"></div>
+            <label class="form-label">Tồn thực tế (số đúng) *</label>
+            <input type="number" id="adj-newQty" class="form-input" min="0">
+            <p class="text-xs text-slate-500 mt-2">Hệ thống sẽ tự tính phần chênh lệch và ghi lại vào lịch sử giao dịch.</p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeModal('modal-adjust-stock')" class="btn btn-outline">Hủy</button>
+            <button onclick="submitAdjustStock()" class="btn btn-primary">Lưu</button>
         </div>
     </div>
 </div>
@@ -694,6 +733,12 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         const lm = Number(item.lastMonthQty || 0);
         return kt.closing + lm;
     }
+    // Vật tư có gắn danh sách kho (allowedKhos) thì chỉ kho đó dùng được;
+    // để trống (không có allowedKhos, hoặc mảng rỗng) nghĩa là dùng chung tất cả kho
+    function itemVisibleToKho(item, kho) {
+        if (!kho) return true;
+        return !item.allowedKhos || item.allowedKhos.length === 0 || item.allowedKhos.includes(kho);
+    }
     // ==========================================
     // CẬP NHẬT SỐ LƯỢNG + GHI LỊCH SỬ
     // ==========================================
@@ -797,7 +842,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     // ==========================================
     // RENDER: TỒN KHO TỔNG
     // ==========================================
-    function renderInventory() {
+    function getFilteredInventoryData() {
         const search = (document.getElementById('search-inv')?.value || '').toLowerCase();
         const cat = document.getElementById('filter-cat')?.value || '';
         const onlyLow = document.getElementById('filter-low-stock')?.checked;
@@ -805,9 +850,34 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             const q = `${i.name} ${i.code||''} ${i.supplier||''}`.toLowerCase();
             return (!search || q.includes(search)) && (!cat || i.category === cat);
         });
+        // Kho không phải admin chỉ thấy vật tư được cấp cho kho mình hoặc vật tư dùng chung
+        if (currentUser?.role !== 'admin' && currentUser?.modelName) {
+            data = data.filter(i => itemVisibleToKho(i, currentUser.modelName));
+        }
         if (onlyLow) {
             data = data.filter(i => getTotalAvailable(i) <= Number(i.expectedConsumption || 0));
         }
+        return data;
+    }
+    function computeInventoryRow(item) {
+        const kt = getBalance(item.id, 'khoTong');
+        const lm = Number(item.lastMonthQty || 0);
+        const locationModels = uniqueModels.filter(m=>m!=='khoTong');
+        let usedAtLocations = 0;
+        const locBalances = {};
+        locationModels.forEach(m => {
+            const mb = getBalance(item.id, m);
+            usedAtLocations += mb.used;
+            locBalances[m] = mb.closing;
+        });
+        const total = lm + kt.received - usedAtLocations;
+        const khoTongRemaining = lm + kt.received - kt.used;
+        const expected = Number(item.expectedConsumption || 0);
+        const isLow = expected > 0 && total < expected;
+        return { lm, received: kt.received, usedAtLocations, closing: total, khoTongRemaining, total, expected, isLow, locBalances, locationModels };
+    }
+    function renderInventory() {
+        let data = getFilteredInventoryData();
         const thead = document.getElementById('inv-thead');
         let h = `
             <th class="sticky-th p-2 bg-slate-50 border-b border-slate-200 text-center">Ảnh</th>
@@ -834,45 +904,57 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             return;
         }
         tbody.innerHTML = data.map(i => {
-            const kt = getBalance(i.id, 'khoTong');
-            const lm = Number(i.lastMonthQty || 0);
-            const locationModels = uniqueModels.filter(m=>m!=='khoTong');
-            // Sử dụng thực tế = tổng tiêu hao tại tất cả các kho/vị trí (không tính
-            // phần chỉ mới được điều chuyển nội bộ từ Kho Tổng ra các kho, vì phần đó
-            // vẫn còn nằm trong công ty, chưa thực sự "mất đi")
-            let usedAtLocations = 0;
+            const r = computeInventoryRow(i);
             let modelCells = '';
-            locationModels.forEach(m => {
-                const mb = getBalance(i.id, m);
-                usedAtLocations += mb.used;
-                modelCells += `<td class="p-2 text-center border-l border-slate-100 ${mb.closing===0?'text-slate-400':'font-medium'}">${mb.closing}</td>`;
+            r.locationModels.forEach(m => {
+                const v = r.locBalances[m];
+                modelCells += `<td class="p-2 text-center border-l border-slate-100 ${v===0?'text-slate-400':'font-medium'}">${v}</td>`;
             });
-            // Total = Tồn Đầu Kỳ + Nhận trong kỳ - Sử dụng ; Tồn Cuối Kỳ = Total
-            const total = lm + kt.received - usedAtLocations;
-            const closing = total;
-            // Kho Tổng = số hiện còn tại kho tổng, tức là chưa được điều chuyển đi kho nào
-            const khoTongRemaining = lm + kt.received - kt.used;
-            const expected = Number(i.expectedConsumption || 0);
-            const isLow = expected > 0 && total < expected;
             const img = i.image ? `<img src="${i.image}" class="img-thumb mx-auto" loading="lazy">` : `<div class="w-9 h-9 bg-slate-100 rounded mx-auto flex items-center justify-center text-xs">📦</div>`;
             
             return `
-                <tr class="${isLow?'low-stock':''} hover:bg-slate-50">
+                <tr class="${r.isLow?'low-stock':''} hover:bg-slate-50">
                     <td class="p-2 text-center">${img}</td>
                     <td class="p-2 font-medium">${i.name}</td>
                     <td class="p-2 text-center text-xs text-slate-500">${i.code||'-'}</td>
                     <td class="p-2 text-center text-xs">${i.unit||'-'}</td>
-                    <td class="p-2 text-center">${lm}</td>
-                    <td class="p-2 text-center text-blue-600 font-medium">+${kt.received}</td>
-                    <td class="p-2 text-center text-orange-600 font-medium">-${usedAtLocations}</td>
-                    <td class="p-2 text-center font-bold text-sm">${closing}</td>
+                    <td class="p-2 text-center">${r.lm}</td>
+                    <td class="p-2 text-center text-blue-600 font-medium">+${r.received}</td>
+                    <td class="p-2 text-center text-orange-600 font-medium">-${r.usedAtLocations}</td>
+                    <td class="p-2 text-center font-bold text-sm">${r.closing}</td>
                     ${modelCells}
-                    <td class="p-2 text-center font-bold text-sm bg-amber-50">${khoTongRemaining}</td>
-                    <td class="p-2 text-center font-bold text-sm bg-amber-100">${total}</td>
-                    <td class="p-2 text-center text-xs ${isLow?'text-red-600 font-bold':''}">${expected}</td>
+                    <td class="p-2 text-center font-bold text-sm bg-amber-50">${r.khoTongRemaining}</td>
+                    <td class="p-2 text-center font-bold text-sm bg-amber-100">${r.total}</td>
+                    <td class="p-2 text-center text-xs ${r.isLow?'text-red-600 font-bold':''}">${r.expected}</td>
                 </tr>
             `;
         }).join('');
+    }
+    function exportInventoryExcel() {
+        if (typeof XLSX === 'undefined') { showError('Chưa tải được thư viện Excel'); return; }
+        const data = getFilteredInventoryData();
+        if (data.length === 0) { showError('Không có dữ liệu để xuất'); return; }
+        const rows = data.map(item => {
+            const r = computeInventoryRow(item);
+            const row = {
+                'Tên vật tư': item.name,
+                'Mã': item.code || '',
+                'ĐVT': item.unit || '',
+                'Tồn Đầu Kỳ': r.lm,
+                'Nhận trong kỳ': r.received,
+                'Sử dụng': r.usedAtLocations,
+                'Tồn Cuối Kỳ': r.closing
+            };
+            r.locationModels.forEach(m => { row[m] = r.locBalances[m]; });
+            row['Kho Tổng'] = r.khoTongRemaining;
+            row['Total'] = r.total;
+            row['Dự tính'] = r.expected;
+            return row;
+        });
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Ton Kho Tong');
+        XLSX.writeFile(wb, `Ton_Kho_Tong_${todayStr()}.xlsx`);
     }
     // ==========================================
     // RENDER: ĐẶT HÀNG
@@ -934,6 +1016,28 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             `;
         }).join('');
     }
+    function exportOrdersExcel() {
+        if (typeof XLSX === 'undefined') { showError('Chưa tải được thư viện Excel'); return; }
+        if (ordersData.length === 0) { showError('Chưa có đơn đặt hàng để xuất'); return; }
+        const rows = ordersData.map(o => {
+            const qty = Number(o.qty || 0);
+            const rec = Number(o.actualQty || 0);
+            const status = rec >= qty ? 'Đã nhận đủ' : (rec > 0 ? `Đã nhận ${rec}/${qty}` : 'Chưa nhận');
+            return {
+                'Kỳ': o.month || '',
+                'Tên vật tư': o.name || '',
+                'Mã': o.code || '',
+                'Số lượng đặt': qty,
+                'Ngày dự kiến nhận': o.expectDate || '',
+                'Đã nhận': rec,
+                'Trạng thái': status
+            };
+        });
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Dat Mua');
+        XLSX.writeFile(wb, `Dat_Mua_${todayStr()}.xlsx`);
+    }
     // ==========================================
     // RENDER: PHÁT KHO
     // ==========================================
@@ -941,9 +1045,10 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         const tbody = document.getElementById('distribution-tbody');
         if (!tbody) return;
         const search = (document.getElementById('search-dist')?.value || '').toLowerCase();
+        const target = document.getElementById('dist-target')?.value || '';
         const data = catalogData.filter(i => {
             const q = `${i.name} ${i.code||''}`.toLowerCase();
-            return !search || q.includes(search);
+            return (!search || q.includes(search)) && itemVisibleToKho(i, target);
         });
         const countEl = document.getElementById('dist-count');
         if (countEl) countEl.textContent = `${data.length} mục`;
@@ -1002,7 +1107,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         const search = (document.getElementById('search-con')?.value || '').toLowerCase();
         const quickItems = catalogData.filter(i => {
             const q = `${i.name} ${i.code||''}`.toLowerCase();
-            return !search || q.includes(search);
+            return (!search || q.includes(search)) && itemVisibleToKho(i, activeModel);
         });
         
         if (quickItems.length === 0) {
@@ -1013,12 +1118,15 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         wrap.innerHTML = quickItems.map(i => {
             const bal = getBalance(i.id, activeModel);
             const img = i.image ? `<img src="${i.image}" class="w-10 h-10 object-cover rounded border" loading="lazy">` : `<div class="w-10 h-10 bg-slate-100 rounded flex items-center justify-center">📦</div>`;
+            const editBtn = currentUser?.role === 'admin'
+                ? `<button onclick="openAdjustStockModal('${i.id}')" class="text-slate-400 hover:text-amber-600" title="Sửa tồn kho thực tế">✏️</button>`
+                : '';
             return `
                 <div class="border border-slate-200 rounded-lg p-3 bg-white flex gap-3 items-center hover:border-amber-400">
                     ${img}
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-sm truncate">${i.name}</div>
-                        <div class="text-xs text-slate-500">Tồn: <strong class="${bal.closing===0?'text-red-500':'text-amber-600'}">${bal.closing}</strong></div>
+                        <div class="text-xs text-slate-500 flex items-center gap-1">Tồn: <strong class="${bal.closing===0?'text-red-500':'text-amber-600'}">${bal.closing}</strong> ${editBtn}</div>
                     </div>
                     <div class="flex gap-1">
                         <input type="number" id="cq-${i.id}" min="1" max="${bal.closing}" placeholder="SL" class="w-16 border rounded px-2 py-1 text-center text-sm" ${bal.closing===0?'disabled':''}>
@@ -1056,6 +1164,41 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         
         showToast(`✅ Đã trừ ${qty} ${item.name}`);
         document.getElementById(`cq-${itemId}`).value = '';
+    }
+    // ==========================================
+    // ĐIỀU CHỈNH TỒN KHO (CHỈ ADMIN) - dùng khi kho có
+    // sẵn tồn thực tế nhưng số trên hệ thống chưa khớp
+    // ==========================================
+    function openAdjustStockModal(itemId) {
+        if (currentUser?.role !== 'admin') return;
+        const sel = document.getElementById('con-model-select');
+        const activeModel = sel ? sel.value : currentUser?.modelName;
+        if (!activeModel) { showError('Chọn kho trước'); return; }
+        const item = catalogData.find(i => i.id === itemId);
+        if (!item) return;
+        const bal = getBalance(itemId, activeModel);
+        document.getElementById('adj-itemId').value = itemId;
+        document.getElementById('adj-model').value = activeModel;
+        document.getElementById('adj-itemName').textContent = item.name;
+        document.getElementById('adj-modelLabel').textContent = `Kho: ${activeModel}`;
+        document.getElementById('adj-current').textContent = bal.closing;
+        document.getElementById('adj-newQty').value = bal.closing;
+        document.getElementById('modal-adjust-stock').classList.remove('hidden');
+    }
+    async function submitAdjustStock() {
+        const itemId = document.getElementById('adj-itemId').value;
+        const model = document.getElementById('adj-model').value;
+        const newQty = Number(document.getElementById('adj-newQty').value);
+        if (document.getElementById('adj-newQty').value === '' || isNaN(newQty) || newQty < 0) {
+            showError('Nhập số lượng hợp lệ'); return;
+        }
+        const bal = getBalance(itemId, model);
+        const delta = newQty - bal.closing;
+        if (delta === 0) { closeModal('modal-adjust-stock'); return; }
+        const r = await updateBalance(itemId, model, delta, 'adjust', `Admin điều chỉnh tồn kho tại ${model}`);
+        if (!r.ok) { showError(r.error); return; }
+        showToast('✅ Đã cập nhật tồn kho');
+        closeModal('modal-adjust-stock');
     }
     // ==========================================
     // RENDER: BẢNG TIÊU HAO CHI TIẾT 3 DÒNG THEO NGÀY
@@ -1237,6 +1380,27 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             </tr>
         `).join('');
     }
+    function exportConsumptionExcel() {
+        if (typeof XLSX === 'undefined') { showError('Chưa tải được thư viện Excel'); return; }
+        let data = [...consumptionsData];
+        if (currentUser?.role === 'user') {
+            data = data.filter(c => c.modelCode === currentUser.modelName);
+        }
+        if (data.length === 0) { showError('Chưa có dữ liệu tiêu hao để xuất'); return; }
+        data.sort((a,b) => new Date(b.date) - new Date(a.date));
+        const rows = data.map(c => ({
+            'Ngày': c.date,
+            'Kho': c.modelCode,
+            'Vật tư': c.modelName,
+            'Mã': c.itemCode || '',
+            'Số lượng': c.qty,
+            'Người nhập': c.username || ''
+        }));
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Tieu Hao');
+        XLSX.writeFile(wb, `Tieu_Hao_${todayStr()}.xlsx`);
+    }
     // ==========================================
     // RENDER: LỊCH SỬ GIAO DỊCH
     // ==========================================
@@ -1262,6 +1426,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             receive: { text: 'Nhận hàng', cls: 'badge-success' },
             distribute: { text: 'Phát kho', cls: 'badge-warning' },
             consume: { text: 'Tiêu hao', cls: 'badge-danger' },
+            adjust: { text: 'Điều chỉnh', cls: 'badge-info' },
             'period-close': { text: 'Đóng kỳ', cls: 'badge-info' }
         };
         
@@ -1377,6 +1542,21 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         } catch(e) { showError('Lỗi xóa: ' + e.message); }
     }
 
+    function renderCatalogKhoCheckboxes(selected) {
+        const wrap = document.getElementById('c-khos-list');
+        if (!wrap) return;
+        const khos = uniqueModels.filter(m => m !== 'khoTong');
+        if (khos.length === 0) {
+            wrap.innerHTML = '<span class="text-xs text-slate-400 col-span-2">Chưa có kho nào (tạo user gắn với kho trước)</span>';
+            return;
+        }
+        wrap.innerHTML = khos.map(k => `
+            <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+                <input type="checkbox" class="c-kho-cb" value="${k}" ${selected.includes(k)?'checked':''}>
+                <span>${k}</span>
+            </label>
+        `).join('');
+    }
     function openCatalogModal(item = null) {
         document.getElementById('catalog-modal-title').textContent = item ? 'Sửa vật tư' : 'Thêm vật tư';
         document.getElementById('c-id').value = item ? item.id : '';
@@ -1388,6 +1568,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         document.getElementById('c-lastMonthQty').value = item ? (item.lastMonthQty || 0) : 0;
         document.getElementById('c-expectedConsumption').value = item ? (item.expectedConsumption || 0) : 0;
         document.getElementById('c-image-base64').value = item ? (item.image || '') : '';
+        renderCatalogKhoCheckboxes(item && item.allowedKhos ? item.allowedKhos : []);
         if (item && item.image) {
             document.getElementById('c-image-preview').src = item.image;
             document.getElementById('c-image-preview').style.display = 'block';
@@ -1412,6 +1593,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             lastMonthQty: Number(document.getElementById('c-lastMonthQty').value) || 0,
             expectedConsumption: Number(document.getElementById('c-expectedConsumption').value) || 0,
             image: document.getElementById('c-image-base64').value || '',
+            allowedKhos: Array.from(document.querySelectorAll('.c-kho-cb:checked')).map(cb => cb.value),
             updatedAt: nowISO()
         };
         // Phân loại tự động
