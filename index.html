@@ -22,6 +22,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
 .badge-warning { background: #fef3c7; color: #92400e; }
 .badge-danger { background: #fee2e2; color: #991b1b; }
 .badge-info { background: #dbeafe; color: #1e40af; }
+.badge-recall { background: #ffedd5; color: #9a3412; }
 .toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: white; font-weight: 600; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 .toast.success { background: #10b981; }
 .toast.error { background: #ef4444; }
@@ -142,7 +143,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
                     </div>
                     <div class="overflow-auto" style="max-height: 60vh;">
                         <table class="w-full text-sm">
-                            <thead class="bg-slate-50"><tr><th class="p-3 text-left">Kỳ</th><th class="p-3 text-left">Vật tư</th><th class="p-3 text-center">SL</th><th class="p-3 text-left">Ngày dự kiến</th><th class="p-3 text-center">TT</th><th class="p-3 text-center">TH</th></tr></thead>
+                            <thead class="bg-slate-50"><tr><th class="p-3 text-left">Kỳ</th><th class="p-3 text-left">Vật tư</th><th class="p-3 text-left">Mã</th><th class="p-3 text-center">SL</th><th class="p-3 text-left">Ngày dự kiến</th><th class="p-3 text-center">TT</th><th class="p-3 text-center">Thao tác</th></tr></thead>
                             <tbody id="orders-tbody"></tbody>
                         </table>
                     </div>
@@ -202,7 +203,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex gap-3 items-center">
                 <input type="text" id="trans-search" placeholder="Tìm kiếm..." class="form-input flex-1" oninput="renderTransactions()">
                 <select id="trans-filter" class="form-input w-40" onchange="renderTransactions()">
-                    <option value="">Tất cả loại</option><option value="receive">Nhận hàng</option><option value="distribute">Phát kho</option><option value="consume">Tiêu hao</option><option value="adjust">Điều chỉnh</option>
+                    <option value="">Tất cả loại</option><option value="receive">Nhận hàng</option><option value="distribute">Phát kho</option><option value="consume">Tiêu hao</option><option value="adjust">Điều chỉnh</option><option value="recall">Thu hồi</option>
                 </select>
             </div>
             <div class="bg-white rounded-xl shadow-sm overflow-auto" style="max-height: 70vh;">
@@ -228,7 +229,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
                     <input type="text" id="search-catalog" placeholder="🔍 Tìm kiếm vật tư..." class="form-input mb-3" oninput="renderCatalog()">
                     <div class="overflow-auto" style="max-height: 60vh;">
                         <table class="w-full text-sm">
-                            <thead class="bg-slate-50 sticky top-0"><tr><th class="p-3 text-center w-16">Ảnh</th><th class="p-3 text-left">Tên vật tư</th><th class="p-3 text-center w-28">Loại</th><th class="p-3 text-center w-28">Tồn đầu kỳ</th><th class="p-3 text-center w-28">Dự tính</th><th class="p-3 text-center w-36">Thao tác</th></tr></thead>
+                            <thead class="bg-slate-50 sticky top-0"><tr><th class="p-3 text-center w-16">Ảnh</th><th class="p-3 text-left">Tên vật tư</th><th class="p-3 text-center w-28">Loại</th><th class="p-3 text-center w-28">Tồn đầu kỳ</th><th class="p-3 text-center w-28">Dự tính</th><th class="p-3 text-center w-44">Thao tác</th></tr></thead>
                             <tbody id="catalog-tbody"></tbody>
                         </table>
                     </div>
@@ -371,11 +372,12 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
 <div id="modal-order" class="modal-overlay hidden">
     <div class="modal-box" style="max-width:450px">
         <div class="modal-header">
-            <h3 class="font-bold text-lg">Đặt hàng vật tư</h3>
+            <h3 id="order-modal-title" class="font-bold text-lg">Đặt hàng vật tư</h3>
             <button onclick="closeModal('modal-order')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
         </div>
         <div class="modal-body">
             <input type="hidden" id="o-itemId">
+            <input type="hidden" id="o-orderId" value="">
             <div class="mb-3 p-3 bg-slate-50 rounded-lg">
                 <div id="o-itemName" class="font-bold"></div>
                 <div id="o-itemCode" class="text-xs text-slate-500"></div>
@@ -440,6 +442,100 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     </div>
 </div>
 
+<!-- MODAL NHẬN GIỮA KỲ -->
+<div id="modal-mid-receive" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:700px">
+        <div class="modal-header">
+            <h3 class="font-bold text-lg">📦 Nhận hàng giữa kỳ</h3>
+            <button onclick="closeModal('modal-mid-receive')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="text-xs text-slate-500 mb-3">Dùng khi có lô hàng về ngoài đơn đặt hàng. Số lượng nhận sẽ được cộng thẳng vào <strong>Kho Tổng</strong>.</p>
+            <input type="text" id="search-mid-receive" placeholder="🔍 Tìm vật tư..." class="form-input mb-3" oninput="renderMidReceivePicker()">
+            <div id="mid-receive-picker" class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[55vh] overflow-y-auto"></div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeModal('modal-mid-receive')" class="btn btn-outline">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL NHẬN GIỮA KỲ THEO DÒNG (chọn được ngày nhận) -->
+<div id="modal-row-mid-receive" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:420px">
+        <div class="modal-header">
+            <h3 class="font-bold text-lg">📦 Nhận giữa kỳ</h3>
+            <button onclick="closeModal('modal-row-mid-receive')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="rmr-itemId">
+            <div class="mb-3 p-3 bg-slate-50 rounded-lg">
+                <div id="rmr-itemName" class="font-bold"></div>
+                <div class="text-xs text-slate-500 mt-1">Số lượng sẽ được cộng thẳng vào <strong>Kho Tổng</strong>.</div>
+            </div>
+            <div><label class="form-label">Số lượng nhận *</label><input type="number" id="rmr-qty" class="form-input" min="1" placeholder="Nhập số lượng"></div>
+            <div><label class="form-label">Ngày nhận (mặc định hôm nay — có thể chọn ngày khác)</label><input type="date" id="rmr-date" class="form-input"></div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeModal('modal-row-mid-receive')" class="btn btn-outline">Hủy</button>
+            <button onclick="submitRowMidReceive()" class="btn btn-success">Xác nhận nhận</button>
+        </div>
+    </div>
+</div>
+<!-- MODAL CẤP VẬT TƯ (ADMIN) -->
+<div id="modal-grant-stock" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:420px">
+        <div class="modal-header">
+            <h3 class="font-bold text-lg">➕ Cấp vật tư cho kho</h3>
+            <button onclick="closeModal('modal-grant-stock')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="grant-itemId">
+            <input type="hidden" id="grant-model">
+            <div class="mb-3 p-3 bg-slate-50 rounded-lg">
+                <div id="grant-itemName" class="font-bold"></div>
+                <div id="grant-modelLabel" class="text-xs text-slate-500"></div>
+            </div>
+            <label class="form-label">Khả dụng tại Kho Tổng</label>
+            <div id="grant-available" class="font-bold text-lg text-emerald-600"></div>
+            <label class="form-label">Số lượng cấp thêm *</label>
+            <input type="number" id="grant-qty" class="form-input" min="1">
+            <p class="text-xs text-slate-500 mt-2">Số lượng sẽ được chuyển từ Kho Tổng sang kho này (không tính vào tiêu hao).</p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeModal('modal-grant-stock')" class="btn btn-outline">Hủy</button>
+            <button onclick="submitGrantStock()" class="btn btn-success">Cấp vật tư</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL THU HỒI VẬT TƯ (ADMIN) -->
+<div id="modal-recall-stock" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:420px">
+        <div class="modal-header">
+            <h3 class="font-bold text-lg">↩️ Thu hồi vật tư về Kho Tổng</h3>
+            <button onclick="closeModal('modal-recall-stock')" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="recall-itemId">
+            <input type="hidden" id="recall-model">
+            <div class="mb-3 p-3 bg-slate-50 rounded-lg">
+                <div id="recall-itemName" class="font-bold"></div>
+                <div id="recall-modelLabel" class="text-xs text-slate-500"></div>
+            </div>
+            <label class="form-label">Tồn hiện tại tại kho này</label>
+            <div id="recall-current" class="font-bold text-lg text-amber-600"></div>
+            <label class="form-label">Số lượng thu hồi *</label>
+            <input type="number" id="recall-qty" class="form-input" min="1">
+            <p class="text-xs text-slate-500 mt-2">Số lượng sẽ được chuyển trả về Kho Tổng (không tính vào tiêu hao).</p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeModal('modal-recall-stock')" class="btn btn-outline">Hủy</button>
+            <button onclick="submitRecallStock()" class="btn btn-danger">Thu hồi</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // ==========================================
     // KẾT NỐI FIREBASE
@@ -474,6 +570,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     let uniqueModels = [];
     let currentTab = 'inventory';
     let isSaving = false;
+    let savingStart = 0;
+    let listenersReady = false;
     let activeOrderId = null;
     // ========== HÀM TIỆN ÍCH ==========
     function showToast(msg, type='success') {
@@ -485,6 +583,11 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     }
     function showError(msg) { showToast('❌ ' + msg, 'error'); }
     function todayStr() { return new Date().toISOString().slice(0,10); }
+    // Chỉ render khi tab tương ứng đang hiển thị để giảm tải cho các tab ẩn
+    function secVisible(id) { const el = document.getElementById(id); return el ? !el.classList.contains('hidden') : true; }
+    // Gom nhiều lần render liên tiếp (Firebase bắn sự kiện dày) thành 1 lần để không bị đứng/đơ
+    let _renderTimer = null;
+    function debounceRender(fn) { clearTimeout(_renderTimer); _renderTimer = setTimeout(fn, 80); }
     function nowISO() { return new Date().toISOString(); }
     function getDaysInMonth(monthStr) {
         const [y, m] = monthStr.split('-').map(Number);
@@ -655,8 +758,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
                 showError("Firebase chưa kết nối, vui lòng tải lại trang");
             }
             document.getElementById('current-period').textContent = `📅 Kỳ: ${todayStr().slice(0,7)}`;
-            document.getElementById('period-month').value = todayStr().slice(0,7);
-            document.getElementById('con-month-select').value = todayStr().slice(0,7);
+            const pmEl = document.getElementById('period-month'); if (pmEl) pmEl.value = todayStr().slice(0,7);
+            const cmEl = document.getElementById('con-month-select'); if (cmEl) cmEl.value = todayStr().slice(0,7);
         } else {
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('app-screen').classList.add('hidden');
@@ -681,6 +784,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     // ==========================================
     function initFirebaseListeners() {
         if (!fbdb) return;
+        if (listenersReady) return; // tránh đăng ký listener gấp đôi gây render chậm/đơ
+        listenersReady = true;
         fbdb.ref('users').on('value', snap => {
             usersData = [];
             if (snap.val()) Object.keys(snap.val()).forEach(k => usersData.push({id:k, ...snap.val()[k]}));
@@ -692,31 +797,32 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             if (snap.val()) Object.keys(snap.val()).forEach(k => catalogData.push({id:k, ...snap.val()[k]}));
             updateModels();
             updateDropdowns();
-            renderAll();
-            renderConsumptionAll(); // đồng bộ ngay danh sách vật tư mới vào tab Tiêu Hao
+            debounceRender(() => { renderAll(); renderConsumptionAll(); });
         });
         fbdb.ref('balances').on('value', snap => {
             balancesData = snap.val() || {};
-            renderAll();
-            renderConsumptionQuick(); // cập nhật số tồn hiển thị ở tab Tiêu Hao theo thời gian thực
+            debounceRender(() => {
+                renderAll();
+                renderConsumptionQuick();
+                const mm = document.getElementById('modal-mid-receive');
+                if (mm && !mm.classList.contains('hidden')) renderMidReceivePicker();
+            });
         });
         fbdb.ref('orders').on('value', snap => {
             ordersData = [];
             if (snap.val()) Object.keys(snap.val()).forEach(k => ordersData.push({id:k, ...snap.val()[k]}));
-            renderOrders();
+            debounceRender(renderOrders);
         });
         fbdb.ref('consumptions').on('value', snap => {
             consumptionsData = [];
             if (snap.val()) Object.keys(snap.val()).forEach(k => consumptionsData.push({id:k, ...snap.val()[k]}));
-            renderConsumptionHistory();
-            renderConsumptionDetail();
+            debounceRender(() => { renderConsumptionHistory(); renderConsumptionDetail(); });
         });
         fbdb.ref('transactions').orderByChild('createdAt').limitToLast(300).on('value', snap => {
             transactionsData = [];
             if (snap.val()) Object.keys(snap.val()).forEach(k => transactionsData.push({id:k, ...snap.val()[k]}));
             transactionsData.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-            renderTransactions();
-            renderConsumptionDetail();
+            debounceRender(() => { renderTransactions(); renderConsumptionDetail(); });
         });
     }
     // ==========================================
@@ -742,10 +848,15 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     // ==========================================
     // CẬP NHẬT SỐ LƯỢNG + GHI LỊCH SỬ
     // ==========================================
-    async function updateBalance(itemId, modelName, changeQty, transType, note='') {
+    async function updateBalance(itemId, modelName, changeQty, transType, note='', transDateISO=null) {
         if (!fbdb) return { ok: false, error: 'Chưa kết nối CSDL' };
-        if (isSaving) return { ok: false, error: 'Đang xử lý...' };
+        if (isSaving) {
+            // An toàn: nếu khóa bị kẹt quá 15s (mất mạng giữa chừng) thì tự giải phóng
+            if (Date.now() - savingStart > 15000) { isSaving = false; }
+            else return { ok: false, error: 'Đang xử lý, vui lòng chờ xong thao tác trước...' };
+        }
         isSaving = true;
+        savingStart = Date.now();
         const item = catalogData.find(i => i.id === itemId);
         if (!item) { isSaving = false; return { ok: false, error: 'Không tìm thấy vật tư' }; }
         let available;
@@ -769,7 +880,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         updates[`transactions/${tid}`] = {
             itemId, itemName: item.name, itemCode: item.code || '',
             modelName, changeQty, type: transType, note,
-            username: currentUser.username, createdAt: nowISO()
+            username: currentUser.username, createdAt: transDateISO || nowISO()
         };
         try {
             await fbdb.ref().update(updates);
@@ -821,10 +932,13 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         document.querySelectorAll('[id^="section-"]').forEach(s => s.classList.add('hidden'));
         document.getElementById(`section-${tab}`)?.classList.remove('hidden');
         
-        if (tab === 'inventory') renderInventory();
-        if (tab === 'orders') renderOrderPicker();
-        if (tab === 'distribution') renderDistribution();
-        if (tab === 'consumption') renderConsumptionAll();
+        // Hoãn render nặng sang frame kế tiếp để tab chuyển ngay lập tức (không phải bấm nhiều lần)
+        if (tab === 'inventory') setTimeout(renderInventory, 0);
+        if (tab === 'orders') setTimeout(() => { renderOrderPicker(); renderOrders(); }, 0);
+        if (tab === 'distribution') setTimeout(renderDistribution, 0);
+        if (tab === 'consumption') setTimeout(renderConsumptionAll, 0);
+        if (tab === 'transactions') setTimeout(renderTransactions, 0);
+        if (tab === 'setup') setTimeout(() => { renderCatalog(); renderUsers(); }, 0);
     }
     function renderAll() {
         renderInventory();
@@ -883,6 +997,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         return { lm, received: kt.received, usedAtLocations, closing: total, khoTongRemaining, total, expected, isLow, locBalances, locationModels };
     }
     function renderInventory() {
+        if (!secVisible('section-inventory')) return;
         let data = getFilteredInventoryData();
         const thead = document.getElementById('inv-thead');
         let h = `
@@ -966,6 +1081,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     // RENDER: ĐẶT HÀNG
     // ==========================================
     function renderOrderPicker() {
+        if (!secVisible('section-orders')) return;
         const kw = (document.getElementById('search-order')?.value || '').toLowerCase();
         const wrap = document.getElementById('order-picker');
         if (!wrap) return;
@@ -989,6 +1105,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         }).join('');
     }
     function renderOrders() {
+        if (!secVisible('section-orders')) return;
         const tbody = document.getElementById('orders-tbody');
         if (!tbody) return;
         if (ordersData.length === 0) {
@@ -998,26 +1115,27 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         tbody.innerHTML = ordersData.map(o => {
             const qty = Number(o.qty || 0);
             const rec = Number(o.actualQty || 0);
-            let status, btn;
+            let status, receiveBtn;
             if (rec >= qty) {
                 status = `<span class="badge badge-success">Đã nhận đủ</span>`;
-                btn = `<span class="text-slate-400 text-xs">Xong</span>`;
+                receiveBtn = `<span class="text-slate-400 text-xs">Xong</span>`;
             } else if (rec > 0) {
                 status = `<span class="badge badge-info">Đã nhận ${rec}/${qty}</span>`;
-                btn = `<button onclick="openReceiveModal('${o.id}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">Nhận tiếp</button>`;
+                receiveBtn = `<button onclick="openReceiveModal('${o.id}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">Nhận tiếp</button>`;
             } else {
                 status = `<span class="badge badge-warning">Chưa nhận</span>`;
-                btn = `<button onclick="openReceiveModal('${o.id}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">Nhận hàng</button>`;
+                receiveBtn = `<button onclick="openReceiveModal('${o.id}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">Nhận hàng</button>`;
             }
+            const actionBtns = `<div class="flex flex-col items-center gap-1.5">${receiveBtn}<div><button onclick="editOrder('${o.id}')" class="text-blue-600 text-xs font-bold mr-2">Sửa</button><button onclick="deleteOrder('${o.id}')" class="text-red-600 text-xs font-bold">Xóa</button></div></div>`;
             return `
                 <tr class="border-b hover:bg-slate-50">
                     <td class="p-3.5">${o.month||''}</td>
-                    <td class="p-3.5 font-medium">${o.name||''}</td>
-                    <td class="p-3.5 text-xs text-slate-500">${o.code||'-'}</td>
+                    <td class="p-3.5 font-medium">${o.itemName||o.name||''}</td>
+                    <td class="p-3.5 text-xs text-slate-500">${o.itemCode||o.code||'-'}</td>
                     <td class="p-3.5 text-center font-bold">${qty}</td>
                     <td class="p-3.5 text-xs">${o.expectDate||''}</td>
                     <td class="p-3.5 text-center">${status}</td>
-                    <td class="p-3.5 text-center">${btn}</td>
+                    <td class="p-3.5 text-center">${actionBtns}</td>
                 </tr>
             `;
         }).join('');
@@ -1048,6 +1166,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     // RENDER: PHÁT KHO
     // ==========================================
     function renderDistribution() {
+        if (!secVisible('section-distribution')) return;
         const tbody = document.getElementById('distribution-tbody');
         if (!tbody) return;
         const search = (document.getElementById('search-dist')?.value || '').toLowerCase();
@@ -1094,6 +1213,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     // RENDER: TIÊU HAO NHANH
     // ==========================================
     function renderConsumptionQuick() {
+        if (!secVisible('section-consumption')) return;
         const wrap = document.getElementById('consumption-quick');
         if (!wrap) return;
         
@@ -1127,12 +1247,18 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             const editBtn = currentUser?.role === 'admin'
                 ? `<button onclick="openAdjustStockModal('${i.id}')" class="text-slate-400 hover:text-amber-600" title="Sửa tồn kho thực tế">✏️</button>`
                 : '';
+            const grantBtn = currentUser?.role === 'admin'
+                ? `<button onclick="openGrantModal('${i.id}')" class="text-slate-400 hover:text-emerald-600" title="Cấp thêm từ Kho Tổng">➕</button>`
+                : '';
+            const recallBtn = currentUser?.role === 'admin'
+                ? `<button onclick="openRecallModal('${i.id}')" class="text-slate-400 hover:text-red-600" title="Thu hồi về Kho Tổng">↩️</button>`
+                : '';
             return `
                 <div class="border border-slate-200 rounded-lg p-3 bg-white flex gap-3 items-center hover:border-amber-400">
                     ${img}
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-sm truncate">${i.name}</div>
-                        <div class="text-xs text-slate-500 flex items-center gap-1">Tồn: <strong class="${bal.closing===0?'text-red-500':'text-amber-600'}">${bal.closing}</strong> ${editBtn}</div>
+                        <div class="text-xs text-slate-500 flex items-center gap-1">Tồn: <strong class="${bal.closing===0?'text-red-500':'text-amber-600'}">${bal.closing}</strong> ${grantBtn} ${recallBtn} ${editBtn}</div>
                     </div>
                     <div class="flex gap-1">
                         <input type="number" id="cq-${i.id}" min="1" max="${bal.closing}" placeholder="SL" class="w-16 border rounded px-2 py-1 text-center text-sm" ${bal.closing===0?'disabled':''}>
@@ -1207,9 +1333,148 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         closeModal('modal-adjust-stock');
     }
     // ==========================================
+    // NHẬN HÀNG GIỮA KỲ — cộng thẳng vào Kho Tổng,
+    // dùng mỗi khi có lô hàng về ngoài đơn đặt hàng
+    // ==========================================
+    function openMidReceiveModal() {
+        const search = document.getElementById('search-mid-receive');
+        if (search) search.value = '';
+        renderMidReceivePicker();
+        document.getElementById('modal-mid-receive').classList.remove('hidden');
+    }
+    function renderMidReceivePicker() {
+        const wrap = document.getElementById('mid-receive-picker');
+        if (!wrap) return;
+        const search = (document.getElementById('search-mid-receive')?.value || '').toLowerCase();
+        const items = catalogData.filter(i => {
+            const q = `${i.name} ${i.code||''}`.toLowerCase();
+            return !search || q.includes(search);
+        });
+        if (items.length === 0) {
+            wrap.innerHTML = `<div class="col-span-full text-center text-slate-400 py-4">${catalogData.length===0?'Chưa có vật tư':'Không tìm thấy vật tư phù hợp'}</div>`;
+            return;
+        }
+        wrap.innerHTML = items.map(i => {
+            const avail = getTotalAvailable(i);
+            const img = i.image ? `<img src="${i.image}" class="w-10 h-10 object-cover rounded border" loading="lazy">` : `<div class="w-10 h-10 bg-slate-100 rounded flex items-center justify-center">📦</div>`;
+            return `
+                <div class="border border-slate-200 rounded-lg p-2.5 bg-white flex gap-2.5 items-center hover:border-emerald-400">
+                    ${img}
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-sm truncate">${i.name}</div>
+                        <div class="text-xs text-slate-500">Tồn Kho Tổng: <strong class="text-emerald-600">${avail}</strong></div>
+                    </div>
+                    <div class="flex gap-1">
+                        <input type="number" id="mr-qty-${i.id}" min="1" placeholder="SL" class="w-16 border rounded px-2 py-1 text-center text-sm">
+                        <button onclick="submitMidReceive('${i.id}')" class="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded">Nhận</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    async function submitMidReceive(itemId) {
+        const qtyInput = document.getElementById(`mr-qty-${itemId}`);
+        const qty = Number(qtyInput?.value);
+        if (!qty || qty <= 0) { showError('Nhập số lượng hợp lệ'); return; }
+        const item = catalogData.find(i => i.id === itemId);
+        const r = await updateBalance(itemId, 'khoTong', qty, 'receive', 'Nhận giữa kỳ');
+        if (!r.ok) { showError(r.error); return; }
+        showToast(`✅ Đã nhận ${qty} ${item?.name || ''} vào Kho Tổng`);
+        renderMidReceivePicker();
+    }
+    // Nhận giữa kỳ nhanh theo từng dòng trong Danh mục vật tư — chọn được ngày nhận
+    function openRowMidReceive(itemId) {
+        const item = catalogData.find(i => i.id === itemId);
+        if (!item) { showError('Không tìm thấy vật tư'); return; }
+        document.getElementById('rmr-itemId').value = itemId;
+        document.getElementById('rmr-itemName').textContent = item.name + (item.code ? '  (Mã: ' + item.code + ')' : '');
+        document.getElementById('rmr-qty').value = '';
+        document.getElementById('rmr-date').value = todayStr();
+        document.getElementById('modal-row-mid-receive').classList.remove('hidden');
+        setTimeout(() => { const q = document.getElementById('rmr-qty'); if (q) q.focus(); }, 50);
+    }
+    async function submitRowMidReceive() {
+        const itemId = document.getElementById('rmr-itemId').value;
+        const qty = Number(document.getElementById('rmr-qty').value);
+        const dateStr = document.getElementById('rmr-date').value || todayStr();
+        if (!qty || qty <= 0) { showError('Nhập số lượng hợp lệ'); return; }
+        const item = catalogData.find(i => i.id === itemId);
+        // Ghi giao dịch theo đúng ngày người dùng chọn (không ép bằng ngày hôm nay)
+        const transISO = dateStr + 'T' + new Date().toTimeString().slice(0, 8);
+        const r = await updateBalance(itemId, 'khoTong', qty, 'receive', `Nhận giữa kỳ (ngày ${dateStr})`, transISO);
+        if (!r.ok) { showError(r.error); return; }
+        showToast(`✅ Đã nhận ${qty} ${item?.name || ''} vào Kho Tổng`);
+        closeModal('modal-row-mid-receive');
+    }
+    // ==========================================
+    // CẤP VẬT TƯ (ADMIN) — chuyển từ Kho Tổng sang
+    // kho/model đang chọn ở tab Tiêu Hao
+    // ==========================================
+    function openGrantModal(itemId) {
+        if (currentUser?.role !== 'admin') return;
+        const sel = document.getElementById('con-model-select');
+        const activeModel = sel ? sel.value : currentUser?.modelName;
+        if (!activeModel) { showError('Chọn kho trước'); return; }
+        const item = catalogData.find(i => i.id === itemId);
+        if (!item) return;
+        document.getElementById('grant-itemId').value = itemId;
+        document.getElementById('grant-model').value = activeModel;
+        document.getElementById('grant-itemName').textContent = item.name;
+        document.getElementById('grant-modelLabel').textContent = `Cấp cho kho: ${activeModel}`;
+        document.getElementById('grant-available').textContent = getTotalAvailable(item);
+        document.getElementById('grant-qty').value = '';
+        document.getElementById('modal-grant-stock').classList.remove('hidden');
+    }
+    async function submitGrantStock() {
+        const itemId = document.getElementById('grant-itemId').value;
+        const model = document.getElementById('grant-model').value;
+        const qty = Number(document.getElementById('grant-qty').value);
+        if (!qty || qty <= 0) { showError('Nhập số lượng hợp lệ'); return; }
+        const r1 = await updateBalance(itemId, 'khoTong', -qty, 'distribute', `Cấp bổ sung cho ${model}`);
+        if (!r1.ok) { showError(r1.error); return; }
+        const r2 = await updateBalance(itemId, model, qty, 'distribute', `Admin cấp bổ sung`);
+        if (!r2.ok) { showError(r2.error); return; }
+        showToast(`✅ Đã cấp ${qty} cho ${model}`);
+        closeModal('modal-grant-stock');
+    }
+    // ==========================================
+    // THU HỒI VẬT TƯ (ADMIN) — chuyển từ kho/model
+    // đang chọn về lại Kho Tổng, không tính vào tiêu hao
+    // ==========================================
+    function openRecallModal(itemId) {
+        if (currentUser?.role !== 'admin') return;
+        const sel = document.getElementById('con-model-select');
+        const activeModel = sel ? sel.value : currentUser?.modelName;
+        if (!activeModel) { showError('Chọn kho trước'); return; }
+        const item = catalogData.find(i => i.id === itemId);
+        if (!item) return;
+        const bal = getBalance(itemId, activeModel);
+        document.getElementById('recall-itemId').value = itemId;
+        document.getElementById('recall-model').value = activeModel;
+        document.getElementById('recall-itemName').textContent = item.name;
+        document.getElementById('recall-modelLabel').textContent = `Thu hồi từ kho: ${activeModel}`;
+        document.getElementById('recall-current').textContent = bal.closing;
+        document.getElementById('recall-qty').value = '';
+        document.getElementById('recall-qty').max = bal.closing;
+        document.getElementById('modal-recall-stock').classList.remove('hidden');
+    }
+    async function submitRecallStock() {
+        const itemId = document.getElementById('recall-itemId').value;
+        const model = document.getElementById('recall-model').value;
+        const qty = Number(document.getElementById('recall-qty').value);
+        if (!qty || qty <= 0) { showError('Nhập số lượng hợp lệ'); return; }
+        const r1 = await updateBalance(itemId, model, -qty, 'recall', `Thu hồi về Kho Tổng`);
+        if (!r1.ok) { showError(r1.error); return; }
+        const r2 = await updateBalance(itemId, 'khoTong', qty, 'recall', `Thu hồi từ kho ${model}`);
+        if (!r2.ok) { showError(r2.error); return; }
+        showToast(`✅ Đã thu hồi ${qty} từ ${model} về Kho Tổng`);
+        closeModal('modal-recall-stock');
+    }
+    // ==========================================
     // RENDER: BẢNG TIÊU HAO CHI TIẾT 3 DÒNG THEO NGÀY
     // ==========================================
     function renderConsumptionDetail() {
+        if (!secVisible('section-consumption')) return;
         const modelSel = document.getElementById('con-model-select');
         const monthSel = document.getElementById('con-month-select');
         const tbody = document.getElementById('consumption-tbody');
@@ -1358,6 +1623,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         }
     }
     function renderConsumptionHistory() {
+        if (!secVisible('section-consumption')) return;
         const tbody = document.getElementById('consumption-history-tbody');
         if (!tbody) return;
         
@@ -1411,6 +1677,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     // RENDER: LỊCH SỬ GIAO DỊCH
     // ==========================================
     function renderTransactions() {
+        if (!secVisible('section-transactions')) return;
         const tbody = document.getElementById('transactions-tbody');
         if (!tbody) return;
         
@@ -1433,6 +1700,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             distribute: { text: 'Phát kho', cls: 'badge-warning' },
             consume: { text: 'Tiêu hao', cls: 'badge-danger' },
             adjust: { text: 'Điều chỉnh', cls: 'badge-info' },
+            recall: { text: 'Thu hồi', cls: 'badge-recall' },
             'period-close': { text: 'Đóng kỳ', cls: 'badge-info' }
         };
         
@@ -1457,6 +1725,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     // RENDER: CÀI ĐẶT
     // ==========================================
     function renderCatalog() {
+        if (!secVisible('section-setup')) return;
         const tbody = document.getElementById('catalog-tbody');
         if (!tbody) return;
         const search = (document.getElementById('search-catalog')?.value || '').toLowerCase();
@@ -1465,7 +1734,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
             return !search || q.includes(search);
         });
         if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">${catalogData.length===0?'Chưa có vật tư':'Không tìm thấy vật tư phù hợp'}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">${catalogData.length===0?'Chưa có vật tư':'Không tìm thấy vật tư phù hợp'}</td></tr>`;
             return;
         }
         tbody.innerHTML = data.map(i => {
@@ -1474,11 +1743,13 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
                 <tr class="border-b hover:bg-slate-50">
                     <td class="p-2.5 text-center">${img}</td>
                     <td class="p-2.5 font-bold">${i.name}</td>
+                    <td class="p-2.5 text-center text-xs text-slate-500">${i.category||'-'}</td>
                     <td class="p-2.5 text-center">${i.lastMonthQty||0}</td>
                     <td class="p-2.5 text-center text-red-600 font-bold">${i.expectedConsumption||0}</td>
-                    <td class="p-2.5 text-center">
-                        <button onclick="editCatalog('${i.id}')" class="text-blue-600 mr-2 text-xs font-bold">Sửa</button>
-                        <button onclick="deleteCatalog('${i.id}')" class="text-red-600 text-xs font-bold">Xóa</button>
+                    <td class="p-2.5 text-center whitespace-nowrap">
+                        <button onclick="editCatalog('${i.id}')" class="text-blue-600 mr-1.5 text-xs font-bold">Sửa</button>
+                        <button onclick="deleteCatalog('${i.id}')" class="text-red-600 mr-1.5 text-xs font-bold">Xóa</button>
+                        <button onclick="openRowMidReceive('${i.id}')" class="text-emerald-600 text-xs font-bold">Nhận</button>
                     </td>
                 </tr>
             `;
@@ -1504,6 +1775,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     }
 
     function renderUsers() {
+        if (!secVisible('section-setup')) return;
         const tbody = document.getElementById('users-tbody');
         if (!tbody) return;
         const search = (document.getElementById('search-users')?.value || '').toLowerCase();
@@ -1661,6 +1933,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
         const item = catalogData.find(c => c.id === itemId);
         if (!item) return;
         currentOrderItem = item;
+        document.getElementById('o-orderId').value = '';
+        document.getElementById('order-modal-title').textContent = 'Đặt hàng vật tư';
         document.getElementById('o-itemId').value = itemId;
         document.getElementById('o-itemName').textContent = item.name || '';
         document.getElementById('o-itemCode').textContent = 'Mã: ' + (item.code || 'Không có');
@@ -1672,24 +1946,66 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     }
 
     async function submitOrder() {
+        const orderId = document.getElementById('o-orderId').value;
         const itemId = document.getElementById('o-itemId').value;
         const month = document.getElementById('o-month').value;
         const qty = Number(document.getElementById('o-qty').value);
         const expectDate = document.getElementById('o-expectDate').value;
         if (!itemId || !month || !qty || qty <= 0) { showError('Vui lòng nhập đầy đủ thông tin'); return; }
         const item = catalogData.find(c => c.id === itemId);
-        const data = {
-            itemId, itemName: item?.name || '', itemCode: item?.code || '',
-            month, qty, expectDate: expectDate || '',
-            actualQty: 0, status: 'pending',
-            createdBy: currentUser?.username || 'admin',
-            createdAt: nowISO()
-        };
         try {
-            await fbdb.ref('orders').push(data);
-            closeModal('modal-order');
-            showToast('✅ Đã tạo đơn đặt hàng');
+            if (orderId) {
+                // Sửa đơn đã đặt: giữ nguyên số đã nhận, chỉ cho sửa SL >= đã nhận
+                const existing = ordersData.find(o => o.id === orderId);
+                const rec = Number(existing?.actualQty || 0);
+                if (qty < rec) { showError(`Số lượng đặt không được nhỏ hơn số đã nhận (${rec})`); return; }
+                const status = rec >= qty ? 'completed' : (rec > 0 ? 'partial' : 'pending');
+                await fbdb.ref('orders/' + orderId).update({
+                    itemId, itemName: item?.name || '', itemCode: item?.code || '',
+                    month, qty, expectDate: expectDate || '', status, updatedAt: nowISO()
+                });
+                closeModal('modal-order');
+                showToast('✅ Đã cập nhật đơn đặt hàng');
+            } else {
+                const data = {
+                    itemId, itemName: item?.name || '', itemCode: item?.code || '',
+                    month, qty, expectDate: expectDate || '',
+                    actualQty: 0, status: 'pending',
+                    createdBy: currentUser?.username || 'admin',
+                    createdAt: nowISO()
+                };
+                await fbdb.ref('orders').push(data);
+                closeModal('modal-order');
+                showToast('✅ Đã tạo đơn đặt hàng');
+            }
         } catch(e) { showError('Lỗi: ' + e.message); }
+    }
+    function editOrder(orderId) {
+        const order = ordersData.find(o => o.id === orderId);
+        if (!order) { showError('Không tìm thấy đơn hàng'); return; }
+        const item = catalogData.find(c => c.id === order.itemId);
+        currentOrderItem = item || null;
+        document.getElementById('o-orderId').value = orderId;
+        document.getElementById('o-itemId').value = order.itemId;
+        document.getElementById('o-itemName').textContent = order.itemName || order.name || '';
+        document.getElementById('o-itemCode').textContent = 'Mã: ' + (order.itemCode || order.code || 'Không có');
+        document.getElementById('order-modal-title').textContent = 'Sửa đơn đặt hàng';
+        document.getElementById('o-month').value = order.month || todayStr().slice(0,7);
+        document.getElementById('o-qty').value = order.qty || '';
+        document.getElementById('o-expectDate').value = order.expectDate || '';
+        document.getElementById('modal-order').classList.remove('hidden');
+    }
+    async function deleteOrder(orderId) {
+        const order = ordersData.find(o => o.id === orderId);
+        const rec = Number(order?.actualQty || 0);
+        const name = order?.itemName || order?.name || '';
+        let msg = 'Xóa đơn đặt hàng này?';
+        if (rec > 0) msg = `Đơn này đã nhận ${rec}. Vẫn xóa? (Lưu ý: số đã nhận vẫn giữ trong kho, chỉ xóa đơn)`;
+        if (!confirm(msg)) return;
+        try {
+            await fbdb.ref('orders/' + orderId).remove();
+            showToast('✅ Đã xóa đơn đặt hàng' + (name ? ': ' + name : ''));
+        } catch(e) { showError('Lỗi xóa: ' + e.message); }
     }
 
     // ==========================================
@@ -1698,7 +2014,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f1f5
     let currentReceiveOrder = null;
     function openReceiveModal(orderId) {
         // Lấy thông tin đơn hàng từ ordersData (nếu có)
-        const order = (window.ordersData || []).find(o => o.id === orderId);
+        const order = ordersData.find(o => o.id === orderId);
         if (!order) { showError('Không tìm thấy đơn hàng'); return; }
         currentReceiveOrder = order;
         document.getElementById('r-orderId').value = orderId;
@@ -2091,8 +2407,6 @@ async function doImport() {
 }
 
 // Khởi tạo
-checkAuth();
-
 checkAuth();
 </script>
 </body>
