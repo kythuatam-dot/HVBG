@@ -98,7 +98,6 @@ tbody tr:hover{background:#f7fafc}
 button.bg-amber-500{background:var(--pri)!important;transition:opacity .15s}
 button.bg-amber-500:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
 .badge{font-weight:600;padding:3px 9px}
-.tab-btn.admin-only{display:none}
 .modal-overlay{background:rgba(15,27,45,.45);backdrop-filter:blur(3px);animation:kvfade .16s ease}
 .modal-box{border-radius:16px;box-shadow:0 30px 70px -20px rgba(15,27,45,.4);animation:kvpop .18s cubic-bezier(.2,.8,.2,1)}
 .modal-header,.modal-footer{border-color:var(--line)}
@@ -637,8 +636,26 @@ button.bg-amber-500:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
     // Chỉ render khi tab tương ứng đang hiển thị để giảm tải cho các tab ẩn
     function secVisible(id) { const el = document.getElementById(id); return el ? !el.classList.contains('hidden') : true; }
     // Gom nhiều lần render liên tiếp (Firebase bắn sự kiện dày) thành 1 lần để không bị đứng/đơ
-    let _renderTimer = null;
-    function debounceRender(fn) { clearTimeout(_renderTimer); _renderTimer = setTimeout(fn, 80); }
+    // Gom nhiều sự kiện dữ liệu dồn dập thành 1 lần vẽ; mỗi loại dữ liệu đổi đều được vẽ, không bỏ sót
+    const _dirty = new Set(); let _renderTimer = null;
+    function scheduleRender(part) {
+        _dirty.add(part);
+        if (_renderTimer) return;
+        _renderTimer = setTimeout(() => { _renderTimer = null; requestAnimationFrame(flushRender); }, 60);
+    }
+    function flushRender() {
+        const d = new Set(_dirty); _dirty.clear();
+        if (d.has('catalog') || d.has('balances')) {
+            renderAll(); renderConsumptionAll();
+            const mm = document.getElementById('modal-mid-receive');
+            if (mm && !mm.classList.contains('hidden')) renderMidReceivePicker();
+        } else {
+            if (d.has('orders')) renderOrders();
+            if (d.has('consumptions')) renderConsumptionHistory();
+            if (d.has('consumptions') || d.has('transactions')) renderConsumptionDetail();
+        }
+        if (d.has('transactions')) renderTransactions();
+    }
     function nowISO() { return new Date().toISOString(); }
     function getDaysInMonth(monthStr) {
         const [y, m] = monthStr.split('-').map(Number);
@@ -738,7 +755,6 @@ button.bg-amber-500:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
             // Đọc toàn bộ danh sách user
             const snap = await fbdb.collection('users').get();
             usersData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            });
 
             // Tìm user khớp thông tin đăng nhập
             // (so khớp không phân biệt hoa/thường với username, và bỏ khoảng trắng dư
@@ -835,30 +851,23 @@ button.bg-amber-500:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
         if (!fbdb || listenersReady) return;
         listenersReady = true;
         const list = snap => snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        // includeMetadataChanges: biết khi nào server đã xác nhận ghi xong (để chỉ báo đồng bộ chính xác);
+        // các sự kiện chỉ đổi metadata thì không vẽ lại giao diện
+        const listen = (name, query, apply) => {
+            let first = true;
+            query.onSnapshot({ includeMetadataChanges: true }, snap => {
+                markSync(name, snap.metadata.hasPendingWrites);
+                if (!first && snap.docChanges().length === 0) return;
+                first = false; apply(snap);
+            }, e => { console.error(name, e); showError('Lỗi đồng bộ ' + name + ': ' + e.message); });
+        };
         const C = n => fbdb.collection(n);
-        const err = n => e => { console.error(n, e); showError('Lỗi đồng bộ ' + n + ': ' + e.message); };
-        C('users').onSnapshot(snap => { markSync(snap); usersData = list(snap); updateModels(); renderUsers(); }, err('users'));
-        C('catalog').onSnapshot(snap => {
-            markSync(snap); catalogData = list(snap); updateModels(); updateDropdowns();
-            debounceRender(() => { renderAll(); renderConsumptionAll(); });
-        }, err('catalog'));
-        C('balances').onSnapshot(snap => {
-            markSync(snap); balancesData = {}; snap.docs.forEach(d => { balancesData[d.id] = d.data(); });
-            debounceRender(() => {
-                renderAll(); renderConsumptionQuick();
-                const mm = document.getElementById('modal-mid-receive');
-                if (mm && !mm.classList.contains('hidden')) renderMidReceivePicker();
-            });
-        }, err('balances'));
-        C('orders').onSnapshot(snap => { markSync(snap); ordersData = list(snap); debounceRender(renderOrders); }, err('orders'));
-        C('consumptions').onSnapshot(snap => {
-            markSync(snap); consumptionsData = list(snap);
-            debounceRender(() => { renderConsumptionHistory(); renderConsumptionDetail(); });
-        }, err('consumptions'));
-        C('transactions').orderBy('createdAt', 'desc').limit(500).onSnapshot(snap => {
-            markSync(snap); transactionsData = list(snap);
-            debounceRender(() => { renderTransactions(); renderConsumptionDetail(); });
-        }, err('transactions'));
+        listen('users', C('users'), snap => { usersData = list(snap); updateModels(); renderUsers(); });
+        listen('catalog', C('catalog'), snap => { catalogData = list(snap); updateModels(); updateDropdowns(); scheduleRender('catalog'); });
+        listen('balances', C('balances'), snap => { balancesData = {}; snap.docs.forEach(d => { balancesData[d.id] = d.data(); }); scheduleRender('balances'); });
+        listen('orders', C('orders'), snap => { ordersData = list(snap); scheduleRender('orders'); });
+        listen('consumptions', C('consumptions'), snap => { consumptionsData = list(snap); scheduleRender('consumptions'); });
+        listen('transactions', C('transactions').orderBy('createdAt', 'desc').limit(500), snap => { transactionsData = list(snap); scheduleRender('transactions'); });
     }
     // ==========================================
     // TÍNH TỒN KHO
@@ -888,6 +897,7 @@ button.bg-amber-500:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
     const _busy = new Set();
     async function applyStock(ops, extras = []) {
         if (!fbdb) return { ok: false, error: 'Chưa kết nối CSDL' };
+        if (!navigator.onLine) return { ok: false, error: 'Đang mất mạng — thao tác kho cần có mạng để số liệu không bị lệch. Vui lòng thử lại khi có mạng.' };
         const key = ops.map(o => o.itemId + '|' + o.modelName + '|' + o.changeQty).join(';');
         if (_busy.has(key)) return { ok: false, error: 'Đang xử lý thao tác này, vui lòng chờ...' };
         _busy.add(key);
@@ -922,7 +932,8 @@ button.bg-amber-500:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
             });
             return { ok: true };
         } catch (e) {
-            return { ok: false, error: e.message };
+            const net = e && (e.code === 'unavailable' || e.code === 'deadline-exceeded');
+            return { ok: false, error: net ? 'Mất kết nối tới máy chủ — chưa có gì được ghi, vui lòng thử lại.' : e.message };
         } finally { _busy.delete(key); }
     }
     function updateBalance(itemId, modelName, changeQty, transType, note = '', transDateISO = null) {
@@ -2433,13 +2444,13 @@ async function doImport() {
 // ==========================================
 // ĐỒNG BỘ, CHUYỂN DỮ LIỆU, SAO LƯU
 // ==========================================
-let _pend = false;
-function markSync(snap) { _pend = snap.metadata.hasPendingWrites; paintSync(); }
+const _pendBy = {};
+function markSync(name, pending) { _pendBy[name] = !!pending; paintSync(); }
 function paintSync() {
     const b = document.getElementById('sync-badge'); if (!b) return;
-    const off = !navigator.onLine;
-    b.className = 'sync-badge ' + (off ? 'off' : (_pend ? 'pend' : 'ok'));
-    b.textContent = off ? 'Ngoại tuyến' : (_pend ? 'Đang đồng bộ…' : 'Đã đồng bộ');
+    const off = !navigator.onLine, pend = Object.values(_pendBy).some(Boolean);
+    b.className = 'sync-badge ' + (off ? 'off' : (pend ? 'pend' : 'ok'));
+    b.textContent = off ? 'Ngoại tuyến' : (pend ? 'Đang đồng bộ…' : 'Đã đồng bộ');
 }
 addEventListener('online', paintSync); addEventListener('offline', paintSync);
 
