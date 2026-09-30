@@ -306,9 +306,10 @@ button.bg-amber-500:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
         </div>
         <div class="modal-body">
             <div class="mb-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
-                <strong>📋 Cách 1:</strong> File Excel - ghi URL ảnh vào cột "Ảnh"<br>
-                <strong>📦 Cách 2:</strong> File ZIP - chứa Excel + ảnh, tên ảnh = Mã hoặc Tên vật tư<br>
-                <em>Cột: Tên vật tư*, Mã, ĐVT, Loại, Nhà cung cấp, Tồn đầu kỳ, Dự tính, Ảnh</em>
+                <strong>📋 Cách 1 (khuyên dùng):</strong> File Excel có ảnh chèn thẳng vào file, mỗi ảnh nằm ở dòng của vật tư đó — chọn file là tự nhận ảnh, không cần làm thêm gì<br>
+                <strong>🔗 Cách 2:</strong> Ghi URL ảnh vào cột "Ảnh"<br>
+                <strong>📦 Cách 3:</strong> File ZIP chứa Excel + ảnh rời, tên ảnh = Mã hoặc Tên vật tư<br>
+                <em>Cột: Tên vật tư*, Mã, ĐVT, Loại, Nhà cung cấp, Tồn đầu kỳ, Dự tính, Ảnh</em><br><em>Danh sách vật tư luôn tự sắp xếp A-Z theo tên.</em>
             </div>
             <div id="import-step-1">
                 <div class="file-drop-zone" onclick="document.getElementById('import-file').click()">
@@ -863,7 +864,7 @@ button.bg-amber-500:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
         };
         const C = n => fbdb.collection(n);
         listen('users', C('users'), snap => { usersData = list(snap); updateModels(); renderUsers(); });
-        listen('catalog', C('catalog'), snap => { catalogData = list(snap); updateModels(); updateDropdowns(); scheduleRender('catalog'); });
+        listen('catalog', C('catalog'), snap => { catalogData = sortByNameAZ(list(snap)); updateModels(); updateDropdowns(); scheduleRender('catalog'); });
         listen('balances', C('balances'), snap => { balancesData = {}; snap.docs.forEach(d => { balancesData[d.id] = d.data(); }); scheduleRender('balances'); });
         listen('orders', C('orders'), snap => { ordersData = list(snap); scheduleRender('orders'); });
         listen('consumptions', C('consumptions'), snap => { consumptionsData = list(snap); scheduleRender('consumptions'); });
@@ -2123,7 +2124,9 @@ async function compressImage(base64Str, maxWidth=200, quality=0.7) {
                     if (w > maxWidth) { h = Math.round(h*maxWidth/w); w = maxWidth; }
                     const canvas = document.createElement('canvas');
                     canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    const cx = canvas.getContext('2d');
+                    cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h);
+                    cx.drawImage(img, 0, 0, w, h);
                     resolve(canvas.toDataURL('image/jpeg', quality));
                 } catch(e) { resolve(base64Str); }
             };
@@ -2198,14 +2201,14 @@ async function handleZipFile(zipFile) {
         console.log('Số key ảnh:', Object.keys(imagesMap).length);
         const excelData = await excelFile.async('arraybuffer');
         document.getElementById('import-filename').textContent = zipFile.name + ' (+' + imageFiles.length + ' ảnh)';
-        parseExcelData(excelData, imagesMap);
+        parseExcelData(excelData, imagesMap, excelFile.name);
     } catch(e) { console.error(e); showError('Lỗi ZIP: ' + e.message); }
 }
 
 function handleExcelFile(file, imagesMap) {
     document.getElementById('import-filename').textContent = file.name;
     const reader = new FileReader();
-    reader.onload = e => parseExcelData(e.target.result, imagesMap);
+    reader.onload = e => parseExcelData(e.target.result, imagesMap, file.name);
     reader.readAsArrayBuffer(file);
 }
 
@@ -2229,7 +2232,180 @@ function findField(row, patterns) {
     return '';
 }
 
-function parseExcelData(data, imagesMap) {
+// Sắp xếp theo tên vật tư A-Z (tiếng Việt, không phân biệt hoa/thường, "M3" < "M10")
+const _viCollator = new Intl.Collator('vi', { sensitivity: 'accent', numeric: true });
+function sortByNameAZ(arr) {
+    return arr.sort((a, b) => {
+        const x = String(a.name || '').trim(), y = String(b.name || '').trim();
+        if (!x !== !y) return x ? -1 : 1;           // tên trống xuống cuối
+        return _viCollator.compare(x, y);
+    });
+}
+
+/*EXTRACT_START*/
+// ---------- Lấy ảnh chèn trực tiếp trong file .xlsx (không cần ZIP, không cần URL) ----------
+const IMG_MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp' };
+const _xml = s => new DOMParser().parseFromString(s, 'application/xml');
+const _all = (n, local) => Array.prototype.slice.call(n.getElementsByTagNameNS('*', local));
+const _one = (n, local) => (n && n.getElementsByTagNameNS('*', local)[0]) || null;
+const _lname = n => n.localName || n.nodeName.split(':').pop();
+function _child(n, local) {
+    for (let c = n && n.firstChild; c; c = c.nextSibling) if (c.nodeType === 1 && _lname(c) === local) return c;
+    return null;
+}
+function _at(el, name) {                       // đọc thuộc tính theo tên gốc (bỏ tiền tố r:, xlrd:)
+    if (!el) return null;
+    for (let i = 0; i < el.attributes.length; i++) {
+        const a = el.attributes[i];
+        if (_lname(a) === name) return a.value;
+    }
+    return null;
+}
+function _resolve(base, target) {
+    if (!target) return '';
+    if (target.charAt(0) === '/') return target.slice(1);
+    const parts = base.split('/'); parts.pop();
+    target.split('/').forEach(seg => { if (seg === '..') parts.pop(); else if (seg && seg !== '.') parts.push(seg); });
+    return parts.join('/');
+}
+async function _rels(zip, part) {
+    const i = part.lastIndexOf('/');
+    const f = zip.file(part.slice(0, i + 1) + '_rels/' + part.slice(i + 1) + '.rels');
+    const out = {};
+    if (!f) return out;
+    _all(_xml(await f.async('string')), 'Relationship').forEach(r => {
+        out[r.getAttribute('Id')] = { type: r.getAttribute('Type') || '', target: _resolve(part, r.getAttribute('Target')) };
+    });
+    return out;
+}
+
+// Ảnh đặt trong ô (Insert > Pictures > Place in Cell — Excel 365): ô có thuộc tính vm -> richData -> media
+async function _inCellImages(zip, sheetDoc, add) {
+    if (['xl/metadata.xml', 'xl/richData/rdrichvalue.xml', 'xl/richData/richValueRel.xml'].some(p => !zip.file(p))) return;
+    const meta = _xml(await zip.file('xl/metadata.xml').async('string'));
+    const tIdx = _all(meta, 'metadataType').findIndex(t => t.getAttribute('name') === 'XLRICHVALUE') + 1;
+    if (!tIdx) return;
+    const fm = _all(meta, 'futureMetadata').find(f => f.getAttribute('name') === 'XLRICHVALUE');
+    const rvOf = fm ? _all(fm, 'bk').map(b => { const r = _one(b, 'rvb'); return r ? parseInt(_at(r, 'i'), 10) : -1; }) : [];
+    const vmNode = _one(meta, 'valueMetadata');
+    const vmList = vmNode ? _all(vmNode, 'bk') : [];
+    const stFile = zip.file('xl/richData/rdrichvaluestructure.xml');
+    const structs = stFile ? _all(_xml(await stFile.async('string')), 's') : [];
+    const rvs = _all(_xml(await zip.file('xl/richData/rdrichvalue.xml').async('string')), 'rv');
+    const relIds = _all(_xml(await zip.file('xl/richData/richValueRel.xml').async('string')), 'rel').map(r => _at(r, 'id'));
+    const relMap = await _rels(zip, 'xl/richData/richValueRel.xml');
+    const mediaOf = i => {
+        const rv = rvs[i]; if (!rv) return null;
+        const st = structs[parseInt(rv.getAttribute('s'), 10)];
+        const pos = st ? _all(st, 'k').map(k => k.getAttribute('n')).indexOf('_rvRel:LocalImageIdentifier') : 0;
+        if (pos < 0) return null;
+        const v = _all(rv, 'v')[pos]; if (!v) return null;
+        const rid = relIds[parseInt(v.textContent, 10)];
+        return rid && relMap[rid] ? relMap[rid].target : null;
+    };
+    _all(sheetDoc, 'c').forEach(c => {
+        const vm = c.getAttribute('vm'); if (!vm) return;
+        const bk = vmList[parseInt(vm, 10) - 1], rc = bk && _one(bk, 'rc');
+        if (!rc || parseInt(rc.getAttribute('t'), 10) !== tIdx) return;
+        const path = mediaOf(rvOf[parseInt(rc.getAttribute('v'), 10)]);
+        const m = /(\d+)$/.exec(c.getAttribute('r') || '');
+        if (path && m) add(parseInt(m[1], 10) - 1, path);
+    });
+}
+
+// Trả về { map: {dòng(0-based) -> dataURL}, total, skipped }. Ảnh được gán theo dòng mà nó nằm trên đó.
+async function extractExcelImages(buffer, sheetIndex, wantedRows, onProgress) {
+    const res = { map: {}, total: 0, skipped: 0 };
+    let zip;
+    try { zip = await JSZip.loadAsync(buffer); } catch (e) { return res; }   // .xls cũ không phải file zip
+    const wbFile = zip.file('xl/workbook.xml');
+    if (!wbFile) return res;
+    const sh = _all(_xml(await wbFile.async('string')), 'sheet')[sheetIndex || 0];
+    const wbRels = await _rels(zip, 'xl/workbook.xml');
+    const shRel = sh && wbRels[_at(sh, 'id')];
+    if (!shRel || !zip.file(shRel.target)) return res;
+    const sheetPath = shRel.target;
+    const sheetDoc = _xml(await zip.file(sheetPath).async('string'));
+
+    const rowMedia = {};                          // dòng -> đường dẫn ảnh trong file zip
+    const add = (row, path) => {
+        if (!IMG_MIME[path.split('.').pop().toLowerCase()]) { res.skipped++; return; }   // EMF/WMF... trình duyệt không đọc được
+        res.total++;
+        if (!(row in rowMedia)) rowMedia[row] = path;
+    };
+
+    // Chiều cao từng dòng (EMU) để biết ảnh nằm trên dòng nào
+    const fmt = _one(sheetDoc, 'sheetFormatPr');
+    const defH = parseFloat(fmt && fmt.getAttribute('defaultRowHeight')) || 15;
+    const rh = {};
+    _all(sheetDoc, 'row').forEach(r => {
+        const i = parseInt(r.getAttribute('r'), 10) - 1;
+        const hid = r.getAttribute('hidden');
+        if (hid === '1' || hid === 'true') rh[i] = 0;
+        else if (r.getAttribute('ht')) rh[i] = parseFloat(r.getAttribute('ht'));
+    });
+    const tops = [0];
+    const topOf = r => { while (tops.length <= r) { const i = tops.length - 1; tops.push(tops[i] + (i in rh ? rh[i] : defH) * 12700); } return tops[r]; };
+    // Dòng bị ảnh phủ nhiều nhất: ưu tiên dòng trên cùng được phủ từ 50% chiều cao trở lên
+    const rowForSpan = (y0, y1, startRow) => {
+        let r = startRow, best = -1, bestOv = 0;
+        while (r < 1048575 && topOf(r + 1) <= y0) r++;
+        for (; r < 1048576 && topOf(r) < Math.max(y1, y0 + 1); r++) {
+            const top = topOf(r), h = topOf(r + 1) - top;
+            if (h <= 0) continue;
+            const ov = Math.min(y1, top + h) - Math.max(y0, top);
+            if (ov <= 0) continue;
+            if (ov / h >= 0.5) return r;
+            if (ov > bestOv) { bestOv = ov; best = r; }
+        }
+        return best >= 0 ? best : startRow;
+    };
+
+    // 1) Ảnh nổi trên trang tính (dán / Insert ảnh thông thường)
+    const shRels = await _rels(zip, sheetPath);
+    const drawRel = Object.keys(shRels).map(k => shRels[k]).find(r => /\/drawing$/.test(r.type));
+    if (drawRel && zip.file(drawRel.target)) {
+        const dRels = await _rels(zip, drawRel.target);
+        const dDoc = _xml(await zip.file(drawRel.target).async('string'));
+        const num = (el, n) => { const e = _one(el, n); return e ? (parseInt(e.textContent, 10) || 0) : 0; };
+        const attrN = (el, n) => el ? (parseInt(el.getAttribute(n), 10) || 0) : 0;
+        [].concat(_all(dDoc, 'twoCellAnchor'), _all(dDoc, 'oneCellAnchor'), _all(dDoc, 'absoluteAnchor')).forEach(a => {
+            const blip = _one(a, 'blip'), rel = blip && dRels[_at(blip, 'embed')];
+            if (!rel) return;
+            const from = _child(a, 'from'), to = _child(a, 'to'), ext = _child(a, 'ext'), pos = _child(a, 'pos');
+            let y0, y1, start = 0;
+            if (from) { start = num(from, 'row'); y0 = topOf(start) + num(from, 'rowOff'); }
+            else y0 = attrN(pos, 'y');
+            if (to) y1 = topOf(num(to, 'row')) + num(to, 'rowOff');
+            else y1 = y0 + attrN(ext, 'cy');
+            add(rowForSpan(y0, y1, start), rel.target);
+        });
+    }
+    // 2) Ảnh đặt trong ô (Excel 365)
+    try { await _inCellImages(zip, sheetDoc, add); } catch (e) { console.warn('Ảnh trong ô:', e); }
+
+    // Giải mã ảnh (chỉ những dòng có trong dữ liệu), nén nhẹ để đỡ tốn bộ nhớ
+    const rows = Object.keys(rowMedia).map(Number).filter(r => !wantedRows || wantedRows.has(r));
+    const cache = {};
+    const load = path => cache[path] || (cache[path] = (async () => {
+        const f = zip.file(path); if (!f) return '';
+        const raw = 'data:' + IMG_MIME[path.split('.').pop().toLowerCase()] + ';base64,' + (await f.async('base64'));
+        return await compressImage(raw, 400, 0.8);
+    })());
+    let done = 0;
+    for (let i = 0; i < rows.length; i += 6) {
+        await Promise.all(rows.slice(i, i + 6).map(async r => {
+            try { const u = await load(rowMedia[r]); if (u) res.map[r] = u; }
+            catch (e) { console.warn('Lỗi đọc ảnh', rowMedia[r], e); }
+            done++;
+        }));
+        if (onProgress) onProgress(done, rows.length);
+    }
+    return res;
+}
+/*EXTRACT_END*/
+
+async function parseExcelData(data, imagesMap, fileName) {
     try {
         const wb = XLSX.read(data, { type: 'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
@@ -2238,6 +2414,27 @@ function parseExcelData(data, imagesMap) {
         console.log('Headers:', Object.keys(json[0]));
         importParsedData = json;
         window._importImagesMap = imagesMap || {};
+        window._importRowImages = {};
+        window._importEmbedInfo = { total: 0, matched: 0, skipped: 0 };
+
+        // Tự động lấy ảnh chèn trực tiếp trong Excel và gán theo dòng — người dùng không phải làm thêm gì
+        if (/\.xls$/i.test(fileName || '')) {
+            showToast('File .xls (định dạng cũ) không chứa ảnh đọc được — hãy lưu lại thành .xlsx', 'info');
+        } else {
+            document.getElementById('import-step-1').classList.add('hidden');
+            document.getElementById('import-step-2').classList.remove('hidden');
+            document.getElementById('import-progress-section').classList.remove('hidden');
+            try {
+                const wanted = new Set(json.map(r => r.__rowNum__));
+                const r = await extractExcelImages(data, 0, wanted, (d, t) => {
+                    const pct = t ? Math.round(d / t * 100) : 100;
+                    document.getElementById('import-progress-bar').style.width = pct + '%';
+                    document.getElementById('import-progress-text').textContent = 'Đọc ảnh ' + d + '/' + t;
+                });
+                window._importRowImages = r.map;
+                window._importEmbedInfo = { total: r.total, matched: Object.keys(r.map).length, skipped: r.skipped };
+            } catch (e) { console.warn('Không đọc được ảnh nhúng:', e); }
+        }
         processImportData();
     } catch(e) { showError('Lỗi đọc Excel: ' + e.message); }
 }
@@ -2270,7 +2467,7 @@ async function processImportData() {
             category = auto.category; sortOrder = auto.sortOrder;
         } else sortOrder = 50;
         
-        const item = { name, code, unit, category, sortOrder, supplier, lastMonthQty, expectedConsumption: expected, imageUrl, image: '', status: '', statusClass: '' };
+        const item = { name, code, unit, category, sortOrder, supplier, lastMonthQty, expectedConsumption: expected, imageUrl, image: (window._importRowImages || {})[row.__rowNum__] || '', status: '', statusClass: '' };
         
         if (!name) { item.status = 'Thiếu tên'; item.statusClass = 'text-red-600'; err++; }
         else if (seenNames.has(name.toLowerCase())) { item.status = 'Trùng tên (bỏ qua)'; item.statusClass = 'text-amber-600'; warn++; }
@@ -2326,16 +2523,22 @@ async function processImportData() {
         }
         if (found) imgFound++;
     }
+    imgFound = importProcessedData.filter(i => i.image && i.status !== 'Thiếu tên').length;
     console.log('Tìm thấy ảnh:', imgFound, '/', importProcessedData.filter(i=>i.status!=='Thiếu tên').length);
     
     document.getElementById('import-progress-section').classList.add('hidden');
+    sortByNameAZ(importProcessedData);
     renderImportPreview();
+    const emb = window._importEmbedInfo || {};
+    let embNote = '';
+    if (emb.total) embNote += '<span class="text-slate-500">Ảnh trong file Excel: ' + emb.total + (emb.matched < emb.total ? ' (' + (emb.total - emb.matched) + ' ảnh không gán được vào dòng vật tư nào)' : '') + '</span>';
+    if (emb.skipped) embNote += '<span class="text-amber-600">' + emb.skipped + ' ảnh định dạng không hỗ trợ (EMF/WMF…) đã bỏ qua</span>';
     document.getElementById('import-summary').innerHTML =
         '<div class="flex gap-4 text-sm flex-wrap"><span>Tổng: <strong>'+importProcessedData.length+'</strong></span>'+
         '<span class="text-emerald-600">Mới: '+ok+'</span>'+
         '<span class="text-amber-600">Trùng/Ghi đè: '+warn+'</span>'+
         '<span class="text-red-600">Lỗi: '+err+'</span>'+
-        '<span class="text-blue-600">Có ảnh: '+imgFound+'</span></div>';
+        '<span class="text-blue-600">Có ảnh: '+imgFound+'</span>'+embNote+'</div>';
     
     const importable = importProcessedData.filter(i => i.status !== 'Thiếu tên' && !i.status.includes('bỏ qua')).length;
     const btn = document.getElementById('btn-do-import');
@@ -2551,6 +2754,15 @@ service cloud.firestore {
 }</pre>
   <p class="mt-2">Không giữ "test mode" mặc định: chế độ đó tự khóa toàn bộ dữ liệu sau 30 ngày.</p></details>
 </div>`);
+
+// Kéo thả file vào khung import
+(function initImportDrop() {
+    const z = document.querySelector('#modal-import .file-drop-zone');
+    if (!z) return;
+    ['dragenter', 'dragover'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.style.borderColor = '#0e6b7a'; z.style.background = '#e3f3f5'; }));
+    ['dragleave', 'drop'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.style.borderColor = ''; z.style.background = ''; }));
+    z.addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) handleImportFile({ target: { files: [f] } }); });
+})();
 
 // Khởi tạo
 checkAuth();
